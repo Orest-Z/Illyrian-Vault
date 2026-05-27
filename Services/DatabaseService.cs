@@ -33,6 +33,11 @@ public sealed class DatabaseService : IAsyncDisposable
 
     public async Task OpenAsync(string hexKey)
     {
+        // Close any existing connection before opening a new one.
+        // Without this, a stale connection from a prior session holds the WAL writer lock
+        // and the new connection's first query throws SqliteException ("file is not a database").
+        await DisposeAsync();
+
         Directory.CreateDirectory(DbDirectory);
         SQLitePCL.Batteries_V2.Init();
 
