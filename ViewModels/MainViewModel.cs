@@ -186,9 +186,10 @@ public partial class MainViewModel : BaseViewModel
     private void NavigateSection(string section) => SelectedSection = section;
 
     [RelayCommand]
-    private void Lock()
+    private async Task LockAsync()
     {
         App.SessionKey = [];
+        await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
 
