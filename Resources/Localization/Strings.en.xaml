@@ -1,0 +1,81 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <sys:String x:Key="AppName">Illyria Vault</sys:String>
+    <sys:String x:Key="AppTagline">Local &amp; Encrypted</sys:String>
+    <sys:String x:Key="EncryptionLabel">Encrypted · AES-256</sys:String>
+    <sys:String x:Key="ProfileLocal">Local profile</sys:String>
+
+    <!-- Login -->
+    <sys:String x:Key="LoginWelcome">Welcome back</sys:String>
+    <sys:String x:Key="LoginSubtitle">Enter your master password to unlock your vault.</sys:String>
+    <sys:String x:Key="MasterPassword">Master Password</sys:String>
+    <sys:String x:Key="MasterPlaceholder">Enter your master password</sys:String>
+    <sys:String x:Key="UnlockButton">Unlock Vault</sys:String>
+    <sys:String x:Key="ForgotPassword">Forgot password?</sys:String>
+    <sys:String x:Key="CreateVault">Create a new vault</sys:String>
+
+    <!-- Register -->
+    <sys:String x:Key="SetupTitle">Set up your vault</sys:String>
+    <sys:String x:Key="SetupSub">Your master password is the only key to your vault. We cannot recover it for you — choose wisely and save the backup key.</sys:String>
+    <sys:String x:Key="StepWord">Step</sys:String>
+    <sys:String x:Key="OfWord">of</sys:String>
+    <sys:String x:Key="NewPassword">New master password</sys:String>
+    <sys:String x:Key="ConfirmPassword">Confirm master password</sys:String>
+    <sys:String x:Key="PasswordStrength">Password strength</sys:String>
+    <sys:String x:Key="PasswordHint">Use 14+ characters with mixed case, numbers and symbols.</sys:String>
+    <sys:String x:Key="BackupKey">Backup recovery key</sys:String>
+    <sys:String x:Key="BackupWarning">If you forget your master password, this file is the only way to recover access. Keep it offline and somewhere safe.</sys:String>
+    <sys:String x:Key="DownloadKey">Download recovery key</sys:String>
+    <sys:String x:Key="KeySaved">I have saved my recovery key offline</sys:String>
+    <sys:String x:Key="AlmostThere">Almost there</sys:String>
+    <sys:String x:Key="AlmostSub">Confirm and create your encrypted vault.</sys:String>
+    <sys:String x:Key="ContinueButton">Continue</sys:String>
+    <sys:String x:Key="BackButton">Back</sys:String>
+    <sys:String x:Key="CreateMyVault">Create my vault</sys:String>
+
+    <!-- Strength labels (score 0-1, 2, 3, 4, 5) -->
+    <sys:String x:Key="StrengthWeak">Weak</sys:String>
+    <sys:String x:Key="StrengthFair">Fair</sys:String>
+    <sys:String x:Key="StrengthGood">Good</sys:String>
+    <sys:String x:Key="StrengthStrong">Strong</sys:String>
+    <sys:String x:Key="StrengthExcellent">Excellent</sys:String>
+
+    <!-- Sidebar -->
+    <sys:String x:Key="NavVault">VAULT</sys:String>
+    <sys:String x:Key="NavCategories">CATEGORIES</sys:String>
+    <sys:String x:Key="NavTools">TOOLS</sys:String>
+    <sys:String x:Key="NavAll">All Items</sys:String>
+    <sys:String x:Key="NavFavorites">Favorites</sys:String>
+    <sys:String x:Key="NavLogins">Logins</sys:String>
+    <sys:String x:Key="NavNotes">Secure Notes</sys:String>
+    <sys:String x:Key="NavCards">Cards</sys:String>
+    <sys:String x:Key="NavIdentities">Identities</sys:String>
+    <sys:String x:Key="NavGenerator">Password Generator</sys:String>
+    <sys:String x:Key="NavSettings">Settings</sys:String>
+
+    <!-- Main window -->
+    <sys:String x:Key="SearchPlaceholder">Search vault…</sys:String>
+    <sys:String x:Key="NewEntry">New Entry</sys:String>
+    <sys:String x:Key="SortedBy">Sorted by</sys:String>
+    <sys:String x:Key="SortRecent">Recently used</sys:String>
+
+    <!-- Detail panel -->
+    <sys:String x:Key="FieldUsername">USERNAME</sys:String>
+    <sys:String x:Key="FieldPassword">PASSWORD</sys:String>
+    <sys:String x:Key="FieldWebsite">WEBSITE</sys:String>
+    <sys:String x:Key="FieldNotes">NOTES</sys:String>
+    <sys:String x:Key="NotesEmpty">No notes for this entry.</sys:String>
+    <sys:String x:Key="GeneratePassword">Generate Password</sys:String>
+    <sys:String x:Key="ViewHistory">View History</sys:String>
+    <sys:String x:Key="NotBreached">Not exposed in known breaches</sys:String>
+    <sys:String x:Key="UpdatedLabel">Updated</sys:String>
+
+    <!-- Categories -->
+    <sys:String x:Key="CatLogin">Login</sys:String>
+    <sys:String x:Key="CatNote">Note</sys:String>
+    <sys:String x:Key="CatCard">Card</sys:String>
+    <sys:String x:Key="CatIdentity">Identity</sys:String>
+
+</ResourceDictionary>

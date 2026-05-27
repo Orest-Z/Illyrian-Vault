@@ -1,0 +1,1173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Illyria Vault — WPF Design Preview</title>
+<meta name="viewport" content="width=1400"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     THEME TOKENS — mirror of /Themes/*.xaml
+     Apply by setting data-theme on <body>.
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* RED — default; matches RedTheme.xaml */
+  body[data-theme="red"] {
+    --window:        #0B0B0C;
+    --sidebar:       #0E0E10;
+    --card:          #121214;
+    --elev:          #1A1A1D;
+    --hover:         #1F1F23;
+    --selected:      #2A1416;
+    --stroke-subtle: rgba(255,255,255,.10);
+    --stroke:        rgba(255,255,255,.18);
+    --stroke-strong: rgba(255,255,255,.32);
+    --text:          #F2F2F2;
+    --text-2:        #9A9AA0;
+    --text-3:        #6B6B72;
+    --on-accent:     #FFFFFF;
+    --accent:        #D61C22;
+    --accent-hover:  #E64048;
+    --accent-press:  #B8161B;
+    --accent-soft:   rgba(214,28,34,.20);
+    --accent-glow:   #D61C22;
+    --success:       #10B981;
+    --warning:       #F59E0B;
+    --danger:        #EF4444;
+    --window-grad:   linear-gradient(135deg, #0B0B0C, #0F0A0B);
+  }
+
+  /* DARK — matches DarkTheme.xaml */
+  body[data-theme="dark"] {
+    --window:        #16161A;
+    --sidebar:       #1B1B20;
+    --card:          #22222A;
+    --elev:          #2A2A33;
+    --hover:         #2E2E3A;
+    --selected:      #2C2D4A;
+    --stroke-subtle: rgba(255,255,255,.10);
+    --stroke:        rgba(255,255,255,.18);
+    --stroke-strong: rgba(255,255,255,.32);
+    --text:          #F2F2F7;
+    --text-2:        #A0A0AE;
+    --text-3:        #6D6D7C;
+    --on-accent:     #FFFFFF;
+    --accent:        #6366F1;
+    --accent-hover:  #818CF8;
+    --accent-press:  #4F52D6;
+    --accent-soft:   rgba(99,102,241,.20);
+    --accent-glow:   #6366F1;
+    --success:       #10B981;
+    --warning:       #F59E0B;
+    --danger:        #EF4444;
+    --window-grad:   linear-gradient(135deg, #16161A, #1A1A22);
+  }
+
+  /* LIGHT — matches LightTheme.xaml */
+  body[data-theme="light"] {
+    --window:        #F5F6F8;
+    --sidebar:       #EEF0F4;
+    --card:          #FFFFFF;
+    --elev:          #FFFFFF;
+    --hover:         #EAECF1;
+    --selected:      #E0E3EC;
+    --stroke-subtle: rgba(0,0,0,.08);
+    --stroke:        rgba(0,0,0,.12);
+    --stroke-strong: rgba(0,0,0,.25);
+    --text:          #1A1B22;
+    --text-2:        #5B5C66;
+    --text-3:        #8A8B95;
+    --on-accent:     #FFFFFF;
+    --accent:        #4F46E5;
+    --accent-hover:  #6366F1;
+    --accent-press:  #3C36B8;
+    --accent-soft:   rgba(79,70,229,.12);
+    --accent-glow:   #4F46E5;
+    --success:       #0E9F6E;
+    --warning:       #CB7D0F;
+    --danger:        #DC2626;
+    --window-grad:   linear-gradient(135deg, #F5F6F8, #EEF0F4);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════ */
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #050507;
+    color: var(--text);
+    font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    transition: background .25s ease;
+  }
+  body[data-theme="light"] { background: #DDE1E8; }
+
+  /* ─── Top toolbar (preview-only — not in WPF) ─── */
+  .preview-bar {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px;
+    background: rgba(10,10,14,.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    color: #E8E8EE;
+    font-size: 12px;
+  }
+  .pb-group { display: flex; align-items: center; gap: 6px; padding: 4px; background: rgba(255,255,255,.04); border-radius: 8px; }
+  .pb-label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #888896; margin-right: 4px; padding-left: 8px; }
+  .pb-btn {
+    padding: 6px 12px; border-radius: 6px;
+    background: transparent; border: 0; color: #C4C4CE;
+    cursor: pointer; font: inherit; font-weight: 600;
+    transition: background .15s, color .15s;
+  }
+  .pb-btn:hover { color: #fff; }
+  .pb-btn.on { background: rgba(255,255,255,.12); color: #fff; }
+  .pb-spacer { flex: 1; }
+  .pb-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #fff; font-size: 13px; }
+  .pb-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: #D61C22; box-shadow: 0 0 8px #D61C22; }
+
+  /* ─── Window frame ─── */
+  .stage {
+    display: grid; place-items: start center;
+    padding: 28px 20px 60px;
+    min-height: calc(100vh - 50px);
+  }
+  .win {
+    background: var(--window-grad);
+    border-radius: 12px;
+    border: 1px solid var(--stroke-subtle);
+    overflow: hidden;
+    display: grid;
+    box-shadow:
+      0 40px 80px rgba(0,0,0,.50),
+      0 12px 32px rgba(0,0,0,.40);
+    transition: background .25s ease;
+  }
+  .titlebar {
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-left: 16px;
+    color: var(--text);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center;
+  }
+  .brand-name { font-size: 13px; font-weight: 600; }
+  .brand-sep  { width: 1px; height: 14px; background: var(--stroke); margin: 0 14px; }
+  .brand-tag  { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+  .titlebar .actions { display: flex; align-items: center; }
+  .seg {
+    display: inline-flex; align-items: center; gap: 0; height: 28px;
+    background: var(--elev); border: 1px solid var(--stroke);
+    border-radius: 8px; margin-right: 8px;
+    padding: 2px;
+  }
+  .seg button {
+    border: 0; background: transparent; cursor: pointer;
+    color: var(--text-2);
+    font: inherit; font-size: 12px; font-weight: 600;
+    padding: 4px 10px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+  }
+  .seg button:hover { color: var(--text); }
+  .seg button.on { background: var(--card); color: var(--text); }
+  .titlebar-spacer-right { width: 8px; }
+  .win-btn {
+    width: 42px; height: 40px; display: grid; place-items: center;
+    color: var(--text-2); cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .win-btn:hover { background: var(--hover); color: var(--text); }
+  .win-btn.close:hover { background: var(--danger); color: #fff; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     LOGIN
+     ═══════════════════════════════════════════════════════════════ */
+  .login { width: 980px; height: 640px; grid-template-rows: 40px 1fr; }
+  .login-body { display: grid; grid-template-columns: 1fr 440px; }
+  .login-hero {
+    margin: 8px 12px 24px 24px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--stroke-subtle);
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: flex-start;
+    padding: 48px;
+  }
+  .login-hero::before {
+    content: ""; position: absolute; top: -100px; right: -100px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    opacity: .20; pointer-events: none;
+  }
+  .login-hero .mark {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center;
+    box-shadow: 0 0 36px var(--accent-glow);
+  }
+  .login-hero h1 {
+    font-size: 34px; font-weight: 600; letter-spacing: -.02em;
+    margin: 24px 0 8px; line-height: 1.1;
+  }
+  .login-hero p { color: var(--text-2); font-size: 14px; margin: 0; }
+  .login-features { margin-top: 32px; display: grid; gap: 12px; }
+  .feat { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .feat .icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center;
+  }
+  .login-form { display: flex; flex-direction: column; justify-content: center; padding: 8px 40px 24px 24px; }
+  .login-form h2 { font-size: 28px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; }
+  .login-form .sub { color: var(--text-2); font-size: 13px; margin: 0 0 28px; }
+  .profile-chip {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+    background: var(--elev); border: 1px solid var(--stroke); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 18px;
+  }
+  .profile-chip .avatar {
+    width: 32px; height: 32px; border-radius: 16px;
+    background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center; font-weight: 600; font-size: 14px;
+  }
+  .profile-chip .name { font-size: 13px; font-weight: 600; }
+  .profile-chip .path { font-size: 12px; color: var(--text-3); margin-top: 2px; font-family: "JetBrains Mono", monospace; }
+  .label { font-size: 11px; font-weight: 600; color: var(--text-3); letter-spacing: .08em; }
+  .input-wrap { position: relative; margin-top: 8px; }
+  .input {
+    width: 100%; height: 44px;
+    background: var(--elev); border: 1px solid var(--stroke);
+    border-radius: 8px; padding: 0 14px 0 14px;
+    color: var(--text); font: inherit; font-size: 14px;
+    outline: none; transition: border-color .15s;
+  }
+  .input:hover { border-color: var(--stroke-strong); }
+  .input:focus { border-color: var(--accent); }
+  .input-wrap .submit {
+    position: absolute; right: 4px; top: 4px; width: 36px; height: 36px;
+    background: transparent; border: 0; border-radius: 8px;
+    color: var(--accent); cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .input-wrap .submit:hover { background: var(--hover); }
+  .forgot { display: inline-block; margin-top: 12px; color: var(--accent-hover); text-decoration: none; font-size: 12px; }
+  .forgot:hover { text-decoration: underline; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 38px; padding: 0 16px;
+    border-radius: 8px; border: 0; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 600;
+    transition: background .15s, border-color .15s, transform .05s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    background: var(--accent); color: var(--on-accent);
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { background: var(--accent-press); }
+  .btn-secondary {
+    background: var(--elev); color: var(--text);
+    border: 1px solid var(--stroke);
+  }
+  .btn-secondary:hover { background: var(--hover); border-color: var(--stroke-strong); }
+  .btn-full { width: 100%; }
+  .login-form .btn-primary { margin-top: 28px; }
+  .login-form .divider { height: 1px; background: var(--stroke-subtle); margin: 24px 0; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     REGISTER (multi-step)
+     ═══════════════════════════════════════════════════════════════ */
+  .register { width: 820px; height: 700px; grid-template-rows: 40px 1fr auto; }
+  .register-body {
+    padding: 0 64px;
+    display: flex; flex-direction: column; justify-content: center; align-items: stretch;
+    min-height: 0; overflow-y: auto;
+  }
+  .step-header { text-align: center; }
+  .step-icon {
+    width: 60px; height: 60px; border-radius: 16px;
+    background: var(--accent); color: var(--on-accent);
+    display: inline-grid; place-items: center;
+    box-shadow: 0 0 32px var(--accent-glow);
+  }
+  .step-meta {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; color: var(--accent);
+    letter-spacing: .12em; text-transform: uppercase;
+  }
+  .step-title { font-size: 28px; font-weight: 600; margin: 10px 0 0; letter-spacing: -.01em; }
+  .step-sub   { color: var(--text-2); font-size: 14px; max-width: 560px; margin: 8px auto 0; line-height: 1.5; }
+  .progress {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px;
+    max-width: 320px; margin: 32px auto 0;
+    height: 4px;
+  }
+  .progress i { background: var(--elev); border-radius: 2px; }
+  .progress i.on { background: var(--accent); }
+  .step-form { max-width: 440px; margin: 32px auto 0; }
+  .step-form .field + .field { margin-top: 16px; }
+  .pwbox {
+    width: 100%; height: 44px;
+    background: var(--elev); border: 1px solid var(--stroke);
+    border-radius: 8px; padding: 0 14px;
+    color: var(--text); font: inherit; font-size: 14px; letter-spacing: .3em;
+    outline: none; transition: border-color .15s;
+  }
+  .pwbox:focus { border-color: var(--accent); }
+  .strength-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; font-size: 12px; }
+  .strength-row .lbl { color: var(--text-2); }
+  .strength-row .val { font-weight: 600; }
+  .strength-bars {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 3px;
+    margin-top: 10px; height: 4px;
+  }
+  .strength-bars i { background: var(--elev); border-radius: 2px; }
+  .hint { color: var(--text-3); font-size: 12px; margin-top: 12px; line-height: 1.5; }
+  /* Step 2 */
+  .warn-card {
+    background: var(--elev); border: 1px solid var(--warning);
+    border-radius: 10px; padding: 16px;
+    display: grid; grid-template-columns: auto 1fr; gap: 12px;
+    color: var(--text-2); font-size: 13px; line-height: 1.5;
+  }
+  .warn-card svg { color: var(--warning); }
+  .key-card {
+    background: var(--card); border: 1px solid var(--stroke-subtle);
+    border-radius: 12px; padding: 20px; margin-top: 16px;
+  }
+  .key-card .key { font-family: "JetBrains Mono", monospace; font-size: 13px; margin-top: 8px; word-break: break-all; }
+  .check {
+    display: inline-flex; align-items: center; gap: 10px;
+    cursor: pointer; margin-top: 18px;
+    font-size: 13px;
+  }
+  .check input { display: none; }
+  .check .box {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: var(--elev); border: 1.5px solid var(--stroke);
+    display: grid; place-items: center;
+    transition: background .15s, border-color .15s;
+  }
+  .check input:checked + .box { background: var(--accent); border-color: var(--accent); }
+  .check input:checked + .box svg { opacity: 1; }
+  .check .box svg { opacity: 0; color: var(--on-accent); }
+  /* Step 3 */
+  .done-mark {
+    width: 80px; height: 80px; border-radius: 40px;
+    background: var(--accent-soft); color: var(--accent);
+    display: inline-grid; place-items: center;
+  }
+  .register-footer { padding: 0 64px 32px; display: flex; justify-content: space-between; gap: 16px; }
+  .register-footer .btn { min-width: 140px; height: 40px; }
+  .register-footer .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MAIN WINDOW
+     ═══════════════════════════════════════════════════════════════ */
+  .main { width: 1320px; height: 800px; grid-template-rows: 40px 1fr; }
+  .main-body { display: grid; grid-template-columns: 248px 380px 1fr; min-height: 0; }
+  .sidebar {
+    background: var(--sidebar);
+    border-right: 1px solid var(--stroke-subtle);
+    display: grid; grid-template-rows: auto 1fr auto;
+    min-height: 0;
+  }
+  .search-wrap { padding: 8px 12px; position: relative; }
+  .search {
+    width: 100%; height: 36px;
+    background: var(--elev); border: 1px solid var(--stroke);
+    border-radius: 8px; padding: 0 10px 0 34px;
+    color: var(--text); font: inherit; font-size: 13px;
+    outline: none; transition: border-color .15s;
+  }
+  .search::placeholder { color: var(--text-3); }
+  .search:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+  .nav { overflow-y: auto; padding-bottom: 8px; }
+  .nav-label { font-size: 11px; font-weight: 600; color: var(--text-3); letter-spacing: .08em; padding: 12px 20px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; margin: 1px 8px;
+    border-radius: 8px;
+    color: var(--text-2); font-size: 13px; font-weight: 500;
+    cursor: pointer; position: relative;
+    transition: background .12s, color .12s;
+  }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.on {
+    background: var(--selected); color: var(--text); font-weight: 600;
+  }
+  .nav-item.on::before {
+    content: ""; position: absolute; left: -2px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 16px; border-radius: 2px; background: var(--accent);
+  }
+  .nav-item .count {
+    margin-left: auto;
+    background: var(--card); color: var(--text-2);
+    font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 9px;
+  }
+  .account {
+    margin: 8px 12px 12px;
+    background: var(--elev); border: 1px solid var(--stroke-subtle);
+    border-radius: 10px; padding: 10px;
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  }
+  .account .avatar {
+    width: 30px; height: 30px; border-radius: 15px;
+    background: var(--accent); color: var(--on-accent);
+    display: grid; place-items: center; font-size: 13px; font-weight: 600;
+  }
+  .account .name { font-size: 13px; font-weight: 600; }
+  .account .meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: transparent; border: 0;
+    display: grid; place-items: center;
+    color: var(--text-2); cursor: pointer;
+    transition: background .12s, color .12s;
+  }
+  .icon-btn.small { width: 28px; height: 28px; }
+  .icon-btn:hover { background: var(--hover); color: var(--text); }
+
+  .listcol {
+    background: var(--window);
+    border-right: 1px solid var(--stroke-subtle);
+    display: grid; grid-template-rows: auto auto 1fr; min-height: 0;
+  }
+  .list-head { padding: 16px 16px 12px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .list-head h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+  .list-head .sub { color: var(--text-2); font-size: 12px; margin-top: 2px; }
+  .sort-row { padding: 0 20px 8px; display: flex; align-items: center; gap: 6px; color: var(--text-3); font-size: 12px; }
+  .sort-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; cursor: pointer; color: var(--text); font-size: 12px; }
+  .sort-pill:hover { background: var(--hover); }
+  .list { overflow-y: auto; padding: 0 12px 12px; }
+  .row {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: center; gap: 12px;
+    padding: 10px 12px; margin: 2px 0;
+    border-radius: 8px; cursor: pointer;
+    transition: background .12s;
+  }
+  .row:hover { background: var(--hover); }
+  .row.on { background: var(--selected); }
+  .tile {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--elev); border: 1px solid var(--stroke);
+    display: grid; place-items: center;
+    color: var(--accent); font-weight: 600; font-size: 14px;
+  }
+  .row .name { font-size: 13px; font-weight: 600; }
+  .row .user { font-size: 12px; color: var(--text-2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+  .row .fav { color: var(--warning); }
+
+  .detail { padding: 28px 32px; overflow-y: auto; min-height: 0; background: var(--window); }
+  .detail-head { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; }
+  .detail-tile {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--elev); border: 1px solid var(--stroke);
+    display: grid; place-items: center;
+    color: var(--accent); font-weight: 600; font-size: 22px;
+  }
+  .detail-title { font-size: 28px; font-weight: 600; letter-spacing: -.01em; line-height: 1.15; }
+  .detail-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: var(--text-3); font-size: 12px; }
+  .chip { padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 600; }
+  .detail-actions { display: flex; gap: 4px; }
+  .card-detail {
+    background: var(--card); border: 1px solid var(--stroke-subtle);
+    border-radius: 12px; padding: 20px; margin-top: 24px;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 4px; margin-top: 6px; }
+  .field-value { font-size: 14px; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .field-divider { height: 1px; background: var(--stroke-subtle); margin: 16px 0; }
+  .strength { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px; height: 4px; margin-top: 12px; }
+  .strength i { background: var(--success); border-radius: 2px; }
+  .pwrow { display: flex; align-items: center; justify-content: space-between; }
+  .pwrow .ok { display: inline-flex; align-items: center; gap: 6px; color: var(--success); font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+  .pwrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .audit {
+    margin-top: 16px;
+    background: var(--card); border: 1px solid var(--stroke-subtle);
+    border-radius: 12px; padding: 16px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+    cursor: pointer;
+  }
+  .audit:hover { background: var(--hover); }
+  .audit .ico { width: 36px; height: 36px; border-radius: 8px; background: rgba(16,185,129,.20); color: var(--success); display: grid; place-items: center; }
+  .audit .a-title { font-size: 13px; font-weight: 600; }
+  .audit .a-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--stroke-strong); }
+</style>
+</head>
+<body data-theme="red" data-lang="en" data-screen="login">
+
+<!-- ═══════════════ PREVIEW TOOLBAR ═══════════════ -->
+<div class="preview-bar">
+  <div class="pb-brand"><div class="dot"></div> Illyria Vault · Design Preview</div>
+
+  <div class="pb-spacer"></div>
+
+  <div class="pb-label">Screen</div>
+  <div class="pb-group" id="screenPicker">
+    <button class="pb-btn on" data-screen="login">Login</button>
+    <button class="pb-btn"    data-screen="register">Register</button>
+    <button class="pb-btn"    data-screen="main">Main</button>
+  </div>
+
+  <div class="pb-label">Theme</div>
+  <div class="pb-group" id="themePicker">
+    <button class="pb-btn"     data-theme="light">Light</button>
+    <button class="pb-btn"     data-theme="dark">Dark</button>
+    <button class="pb-btn on"  data-theme="red">Kuq e Zi</button>
+  </div>
+
+  <div class="pb-label">Language</div>
+  <div class="pb-group" id="langPicker">
+    <button class="pb-btn on" data-lang="en">EN</button>
+    <button class="pb-btn"    data-lang="sq">SQ</button>
+  </div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<!-- ═══════════════ APP LOGIC ═══════════════ -->
+<script>
+// ─── i18n ────────────────────────────────────────────────────────────
+const I18N = {
+  en: {
+    app_name: "Illyria Vault",
+    app_tagline: "Local & Encrypted",
+    encryption: "Encrypted · AES-256",
+    profile_local: "Local profile",
+    // Login
+    login_welcome: "Welcome back",
+    login_subtitle: "Enter your master password to unlock your vault.",
+    master_password: "Master Password",
+    master_placeholder: "Enter your master password",
+    unlock: "Unlock Vault",
+    forgot: "Forgot password?",
+    create_vault: "Create a new vault",
+    // Setup
+    setup_title: "Set up your vault",
+    setup_sub: "Your master password is the only key to your vault. We cannot recover it for you — choose wisely and save the backup key.",
+    step: "Step", of: "of",
+    new_password: "New master password",
+    confirm_password: "Confirm master password",
+    pw_strength: "Password strength",
+    pw_hint: "Use 14+ characters with mixed case, numbers and symbols.",
+    backup_key: "Backup recovery key",
+    backup_warning: "If you forget your master password, this file is the only way to recover access. Keep it offline and somewhere safe.",
+    download_key: "Download recovery key",
+    key_saved: "I have saved my recovery key offline",
+    almost_there: "Almost there",
+    almost_sub: "Confirm and create your encrypted vault.",
+    continue: "Continue", back: "Back", create_my: "Create my vault",
+    strength: ["Weak", "Fair", "Good", "Strong", "Excellent"],
+    // Sidebar
+    nav_vault: "VAULT", nav_categories: "CATEGORIES", nav_tools: "TOOLS",
+    nav_all: "All Items", nav_fav: "Favorites",
+    nav_logins: "Logins", nav_notes: "Secure Notes", nav_cards: "Cards", nav_identities: "Identities",
+    nav_generator: "Password Generator", nav_settings: "Settings",
+    // List
+    search: "Search vault…", new_entry: "New Entry",
+    sorted_by: "Sorted by", sort_recent: "Recently used",
+    entry_one: "entry", entry_many: "entries",
+    // Detail
+    updated: "Updated",
+    cat_login: "Login", cat_note: "Note", cat_card: "Card",
+    f_user: "USERNAME", f_pw: "PASSWORD", f_web: "WEBSITE", f_notes: "NOTES",
+    notes_empty: "No notes for this entry.",
+    generate_pw: "Generate Password",
+    view_history: "View History",
+    not_breached: "Not exposed in known breaches",
+    breach_checked: "Last checked May 25, 2026",
+  },
+  sq: {
+    app_name: "Illyria Vault",
+    app_tagline: "Lokal dhe i Enkriptuar",
+    encryption: "I Enkriptuar · AES-256",
+    profile_local: "Profil lokal",
+    login_welcome: "Mirësevini përsëri",
+    login_subtitle: "Shkruani fjalëkalimin kryesor për të hapur kasafortën tuaj.",
+    master_password: "Fjalëkalimi Kryesor",
+    master_placeholder: "Shkruani fjalëkalimin kryesor",
+    unlock: "Hap Kasafortën",
+    forgot: "Harruat fjalëkalimin?",
+    create_vault: "Krijo kasafortë të re",
+    setup_title: "Konfiguro kasafortën",
+    setup_sub: "Fjalëkalimi juaj kryesor është çelësi i vetëm. Nuk mund ta rikuperojmë — zgjidhni me kujdes dhe ruani çelësin rezervë.",
+    step: "Hapi", of: "nga",
+    new_password: "Fjalëkalim i ri kryesor",
+    confirm_password: "Konfirmoni fjalëkalimin kryesor",
+    pw_strength: "Forca e fjalëkalimit",
+    pw_hint: "Përdorni 14 ose më shumë karaktere me shkronja të mëdha, të vogla, numra dhe simbole.",
+    backup_key: "Çelësi i rikuperimit",
+    backup_warning: "Nëse harroni fjalëkalimin kryesor, ky skedar është e vetmja mënyrë për të rikuperuar aksesin. Mbajeni ofline dhe në një vend të sigurt.",
+    download_key: "Shkarko çelësin e rikuperimit",
+    key_saved: "E kam ruajtur çelësin ofline",
+    almost_there: "Pothuajse aty",
+    almost_sub: "Konfirmo dhe krijo kasafortën e enkriptuar.",
+    continue: "Vazhdo", back: "Kthehu", create_my: "Krijo kasafortën",
+    strength: ["I dobët", "I pranueshëm", "I mirë", "I fortë", "I shkëlqyer"],
+    nav_vault: "KASAFORTA", nav_categories: "KATEGORITË", nav_tools: "VEGLAT",
+    nav_all: "Të gjitha", nav_fav: "Të preferuarat",
+    nav_logins: "Hyrjet", nav_notes: "Shënime të sigurta", nav_cards: "Karta", nav_identities: "Identitete",
+    nav_generator: "Gjenerues fjalëkalimi", nav_settings: "Cilësimet",
+    search: "Kërko në kasafort…", new_entry: "Hyrje e Re",
+    sorted_by: "Renditur sipas", sort_recent: "Të përdorura së fundmi",
+    entry_one: "hyrje", entry_many: "hyrje",
+    updated: "Përditësuar",
+    cat_login: "Hyrje", cat_note: "Shënim", cat_card: "Kartë",
+    f_user: "PËRDORUESI", f_pw: "FJALËKALIMI", f_web: "WEBSAJTI", f_notes: "SHËNIME",
+    notes_empty: "Asnjë shënim për këtë hyrje.",
+    generate_pw: "Gjenero Fjalëkalim",
+    view_history: "Shiko Historikun",
+    not_breached: "Nuk është ekspozuar në shkelje të njohura",
+    breach_checked: "Kontrolluar më 25 Maj, 2026",
+  }
+};
+
+// ─── State ───────────────────────────────────────────────────────────
+const state = {
+  theme: "red",
+  lang:  "en",
+  screen: "login",
+  // Login form
+  loginPassword: "",
+  // Register
+  regStep: 1, regPw: "", regConfirm: "", regKeySaved: false,
+  // Main
+  section: "all", filter: "", selectedIndex: 0, revealed: false,
+};
+
+// ─── Sample entries (same shape as MainWindow.xaml.cs) ──────────────
+const ENTRIES = [
+  { title:"GitHub",       username:"alex@example.com",    password:"kF8x@2!qN9wLm3v", url:"https://github.com/login",       category:"Login", favorite:true,  updated:"May 25, 2026", notes_key:null,    notes_text:"2FA backup codes are stored in the Secure Notes section." },
+  { title:"Figma",        username:"alex.morgan@work.co", password:"7xP!nQ@4kRm2vL",  url:"https://www.figma.com",          category:"Login", favorite:false, updated:"May 27, 2026", notes_key:"notes_empty" },
+  { title:"Linear",       username:"amorgan",             password:"zT9!hY@2bWnEqK",  url:"https://linear.app",             category:"Login", favorite:true,  updated:"May 20, 2026", notes_key:"notes_empty" },
+  { title:"Notion",       username:"alex@example.com",    password:"qM2#vR!8nXdLpA",  url:"https://www.notion.so",          category:"Login", favorite:false, updated:"May 15, 2026", notes_key:"notes_empty" },
+  { title:"AWS Console",  username:"alex.iam.admin",      password:"J!4xK@9pZmQ2nT",  url:"https://console.aws.amazon.com", category:"Login", favorite:false, updated:"May 24, 2026", notes_key:"notes_empty" },
+  { title:"Vercel",       username:"alex@example.com",    password:"b#R8nQ!2kVmL9p",  url:"https://vercel.com/login",       category:"Login", favorite:false, updated:"May 12, 2026", notes_key:"notes_empty" },
+  { title:"Recovery Codes",username:"—", password:"—",    url:"—", category:"Note", favorite:false, updated:"Apr 27, 2026", notes_text:"Multi-factor recovery codes." },
+  { title:"Personal Visa", username:"**** 4218", password:"123", url:"—", category:"Card", favorite:false, updated:"Apr 12, 2026", notes_text:"Expires 09/28" },
+];
+
+const t = (key) => I18N[state.lang][key] ?? key;
+
+// ─── Toolbar wiring ─────────────────────────────────────────────────
+document.getElementById("screenPicker").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  pick("screenPicker", b);
+  state.screen = b.dataset.screen;
+  document.body.dataset.screen = state.screen;
+  render();
+});
+document.getElementById("themePicker").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  pick("themePicker", b);
+  state.theme = b.dataset.theme;
+  document.body.dataset.theme = state.theme;
+});
+document.getElementById("langPicker").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  pick("langPicker", b);
+  state.lang = b.dataset.lang;
+  document.body.dataset.lang = state.lang;
+  render();
+});
+function pick(group, btn) {
+  document.querySelectorAll(`#${group} .pb-btn`).forEach(x => x.classList.remove("on"));
+  btn.classList.add("on");
+}
+
+// ─── ICONS (inline SVG; equivalent to MahApps Material icons) ───────
+const I = {
+  shield: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 9.4 8 11 4.5-1.6 8-6 8-11V5l-8-3z"/><circle cx="12" cy="11" r="2"/><path d="M12 13v4"/></svg>`,
+  lock: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
+  wifi_off: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 2 20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.8A15 15 0 0 1 8 5"/><path d="M21.5 8.8A15 15 0 0 0 14 4.5"/><path d="M5 12.5a10 10 0 0 1 3.4-2.2"/><path d="M19 12.5a10 10 0 0 0-4-2.8"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`,
+  arrow_right: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>`,
+  plus: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>`,
+  chev_down: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>`,
+  chev_right: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>`,
+  search: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
+  grid: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+  star_o: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.5 14.9 8.6l6.7.8-5 4.6 1.5 6.6L12 17.3 5.9 20.6 7.4 14 2.4 9.4l6.7-.8z"/></svg>`,
+  star: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 14.9 8.6l6.7.8-5 4.6 1.5 6.6L12 17.3 5.9 20.6 7.4 14 2.4 9.4l6.7-.8z"/></svg>`,
+  key_o: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="14" r="4"/><path d="m11 11 9-9m-3 3 2 2m-4 0 2 2"/></svg>`,
+  note: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11l4 4v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M16 4v4h4"/><path d="M8 13h8M8 17h6"/></svg>`,
+  card: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5.5" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><path d="M6 15h4"/></svg>`,
+  account: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>`,
+  dice: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><circle cx="7" cy="7" r="1"/><circle cx="17" cy="17" r="1"/></svg>`,
+  cog: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9c.2.6.7 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
+  logout: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5"/><path d="M10 17l-5-5 5-5"/><path d="M15 12H5"/></svg>`,
+  copy: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`,
+  eye: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  eye_off: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 3 18 18"/><path d="M10.6 6.2A10.5 10.5 0 0 1 12 6c5 0 9.3 3 11 7-.5 1.2-1.2 2.3-2.1 3.2"/><path d="M6.6 6.6C4 8 2.3 10.3 1 13c1.7 4 6 7 11 7 1.6 0 3-.3 4.3-.8"/><path d="M9.9 13.1A2.5 2.5 0 0 0 14.1 10"/></svg>`,
+  open_in: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>`,
+  refresh: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>`,
+  history: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  pencil: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>`,
+  more: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>`,
+  shield_check: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 9.4 8 11 4.5-1.6 8-6 8-11V5l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>`,
+  sun: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`,
+  moon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
+  fire: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c2 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-4 3-5-1 3 1 4 2 4 2 0 2-2 1-5 0-2-1-3-1-5z"/></svg>`,
+  min: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>`,
+  max: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/></svg>`,
+  x:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6l-12 12"/></svg>`,
+  alert: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/></svg>`,
+  download: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  check_big: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="5 12 10 17 19 8"/></svg>`,
+  check_sm: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="5 12 10 17 19 8"/></svg>`,
+};
+
+// ─── Title-bar (shared across screens) ──────────────────────────────
+function titleBar(extra = "") {
+  return `
+    <div class="titlebar">
+      <div class="brand">
+        <div class="brand-mark">${I.shield}</div>
+        <div class="brand-name">${t("app_name")}</div>
+        ${extra ? `<div class="brand-sep"></div><div class="brand-tag">${extra}</div>` : ""}
+      </div>
+      <div class="actions">
+        <div class="seg">
+          <button class="${state.lang==="en"?"on":""}" onclick="setLang('en')">EN</button>
+          <button class="${state.lang==="sq"?"on":""}" onclick="setLang('sq')">SQ</button>
+        </div>
+        <div class="seg">
+          <button class="${state.theme==="light"?"on":""}" onclick="setTheme('light')" title="Light">${I.sun}</button>
+          <button class="${state.theme==="dark"?"on":""}"  onclick="setTheme('dark')"  title="Dark">${I.moon}</button>
+          <button class="${state.theme==="red"?"on":""}"   onclick="setTheme('red')"   title="Kuq e Zi">${I.fire}</button>
+        </div>
+        <div class="win-btn">${I.min}</div>
+        <div class="win-btn">${I.max}</div>
+        <div class="win-btn close">${I.x}</div>
+      </div>
+    </div>
+  `;
+}
+window.setTheme = (theme) => { state.theme = theme; document.body.dataset.theme = theme;
+  document.querySelectorAll("#themePicker .pb-btn").forEach(b => b.classList.toggle("on", b.dataset.theme === theme));
+  render(); };
+window.setLang = (lang) => { state.lang = lang; document.body.dataset.lang = lang;
+  document.querySelectorAll("#langPicker .pb-btn").forEach(b => b.classList.toggle("on", b.dataset.lang === lang));
+  render(); };
+
+// ═══════════════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════════════
+function renderLogin() {
+  return `
+  <div class="win login">
+    ${titleBar()}
+    <div class="login-body">
+      <div class="login-hero">
+        <div>
+          <div class="mark">${I.shield}</div>
+          <h1>${t("app_name")}</h1>
+          <p>${t("app_tagline")}</p>
+          <div class="login-features">
+            <div class="feat"><div class="icon">${I.lock}</div><span>${t("encryption")}</span></div>
+            <div class="feat"><div class="icon">${I.wifi_off}</div><span>${t("app_tagline")}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="login-form">
+        <h2>${t("login_welcome")}</h2>
+        <div class="sub">${t("login_subtitle")}</div>
+        <div class="profile-chip">
+          <div class="avatar">A</div>
+          <div>
+            <div class="name">${t("profile_local")}</div>
+            <div class="path">C:\\Users\\You\\Vault.illvault</div>
+          </div>
+          <button class="icon-btn small" title="Switch profile">${I.chev_down}</button>
+        </div>
+        <div class="label">${t("master_password")}</div>
+        <div class="input-wrap">
+          <input id="loginPw" class="input pwbox" type="password" placeholder="${t("master_placeholder")}" value="${"•".repeat(state.loginPassword.length)}"/>
+          <button class="submit" onclick="goToScreen('main')">${I.arrow_right}</button>
+        </div>
+        <a class="forgot" href="#">${t("forgot")}</a>
+        <button class="btn btn-primary btn-full" onclick="goToScreen('main')">${t("unlock")}</button>
+        <div class="divider"></div>
+        <button class="btn btn-secondary btn-full" onclick="goToScreen('register')">${t("create_vault")}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// REGISTER (3-step)
+// ═══════════════════════════════════════════════════════════════════
+function scorePassword(pw) {
+  if (!pw) return 0;
+  let s = 0;
+  if (pw.length >= 8)  s++;
+  if (pw.length >= 14) s++;
+  const v = (/[a-z]/.test(pw)?1:0)+(/[A-Z]/.test(pw)?1:0)+(/[0-9]/.test(pw)?1:0)+(/[^a-zA-Z0-9]/.test(pw)?1:0);
+  s += v - 1;
+  return Math.max(0, Math.min(5, s));
+}
+
+function renderRegister() {
+  const step = state.regStep;
+  const headerByStep = {
+    1: { icon: I.lock,         title: t("setup_title"),  sub: t("setup_sub") },
+    2: { icon: I.key_o,        title: t("backup_key"),   sub: t("backup_warning") },
+    3: { icon: I.shield_check, title: t("almost_there"), sub: t("almost_sub") },
+  }[step];
+  const score = scorePassword(state.regPw);
+  const strengthColors = ["var(--danger)","var(--warning)","var(--warning)","var(--accent)","var(--success)","var(--success)"];
+  const strengthLabel  = state.lang === "sq"
+    ? ["I dobët","I dobët","I pranueshëm","I mirë","I fortë","I shkëlqyer"][score]
+    : ["Weak","Weak","Fair","Good","Strong","Excellent"][score];
+
+  const canNext = step === 1
+      ? state.regPw.length >= 8 && state.regPw === state.regConfirm
+      : step === 2 ? state.regKeySaved : true;
+
+  let panel = "";
+  if (step === 1) {
+    panel = `
+      <div class="step-form">
+        <div class="field">
+          <div class="label">${t("new_password")}</div>
+          <input class="pwbox" id="regPw" type="password" value="${"•".repeat(state.regPw.length)}" style="margin-top:8px;"/>
+        </div>
+        <div class="field">
+          <div class="label">${t("confirm_password")}</div>
+          <input class="pwbox" id="regConf" type="password" value="${"•".repeat(state.regConfirm.length)}" style="margin-top:8px;"/>
+        </div>
+        <div class="strength-row">
+          <span class="lbl">${t("pw_strength")}</span>
+          <span class="val" style="color:${strengthColors[score]}">${strengthLabel}</span>
+        </div>
+        <div class="strength-bars">
+          ${[0,1,2,3,4].map(i => `<i style="background:${i < score ? strengthColors[score] : 'var(--elev)'}"></i>`).join("")}
+        </div>
+        <div class="hint">${t("pw_hint")}</div>
+      </div>
+    `;
+  } else if (step === 2) {
+    panel = `
+      <div class="step-form" style="max-width:500px;">
+        <div class="warn-card">${I.alert}<span>${t("backup_warning")}</span></div>
+        <div class="key-card">
+          <div class="label">${t("backup_key")}</div>
+          <div class="key">ILVT-K3X9-2M7P-QR4N-8WAB-Z1YC-5HJD-6FGE</div>
+        </div>
+        <button class="btn btn-secondary btn-full" style="margin-top:16px;" onclick="downloadKey()">${I.download} <span>${t("download_key")}</span></button>
+        <label class="check">
+          <input type="checkbox" ${state.regKeySaved?"checked":""} onchange="toggleKey(this.checked)"/>
+          <span class="box">${I.check_sm}</span>
+          <span>${t("key_saved")}</span>
+        </label>
+      </div>
+    `;
+  } else {
+    panel = `
+      <div class="step-form" style="max-width:440px;text-align:center;">
+        <div class="done-mark">${I.check_big}</div>
+        <div style="font-size:22px;font-weight:600;margin-top:16px;">${t("almost_there")}</div>
+        <div style="color:var(--text-2);margin-top:8px;">${t("almost_sub")}</div>
+      </div>
+    `;
+  }
+
+  return `
+  <div class="win register">
+    ${titleBar(t("setup_title"))}
+    <div class="register-body">
+      <div class="step-header">
+        <div class="step-icon">${headerByStep.icon}</div>
+        <div class="step-meta">${t("step")} ${step} ${t("of")} 3</div>
+        <div class="step-title">${headerByStep.title}</div>
+        <div class="step-sub">${headerByStep.sub}</div>
+      </div>
+      <div class="progress">
+        <i class="${step>=1?'on':''}"></i><i class="${step>=2?'on':''}"></i><i class="${step>=3?'on':''}"></i>
+      </div>
+      ${panel}
+    </div>
+    <div class="register-footer">
+      <button class="btn btn-secondary" ${step===1?"disabled":""} onclick="regBack()">${t("back")}</button>
+      <button class="btn btn-primary" ${canNext?"":"disabled"} onclick="regNext()">
+        ${step===3 ? t("create_my") : t("continue")}
+      </button>
+    </div>
+  </div>`;
+}
+window.regBack = () => { if (state.regStep > 1) { state.regStep--; render(); } };
+window.regNext = () => { if (state.regStep < 3) { state.regStep++; render(); } else { goToScreen("main"); } };
+window.toggleKey = (v) => { state.regKeySaved = v; render(); };
+window.downloadKey = () => { state.regKeySaved = true; render(); };
+
+// ═══════════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════════
+function filteredEntries() {
+  let q = ENTRIES.slice();
+  switch (state.section) {
+    case "favorites":  q = q.filter(e => e.favorite); break;
+    case "logins":     q = q.filter(e => e.category === "Login"); break;
+    case "notes":      q = q.filter(e => e.category === "Note"); break;
+    case "cards":      q = q.filter(e => e.category === "Card"); break;
+    case "identities": q = q.filter(e => e.category === "Identity"); break;
+  }
+  if (state.filter.trim()) {
+    const f = state.filter.trim().toLowerCase();
+    q = q.filter(e =>
+      e.title.toLowerCase().includes(f) ||
+      e.username.toLowerCase().includes(f) ||
+      e.url.toLowerCase().includes(f));
+  }
+  return q;
+}
+function categoryLabel(cat) {
+  return cat === "Note" ? t("cat_note") : cat === "Card" ? t("cat_card") : t("cat_login");
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function renderMain() {
+  const sections = [
+    { id: "all",        label: t("nav_all"),       icon: I.grid, count: ENTRIES.length, group: "vault" },
+    { id: "favorites",  label: t("nav_fav"),       icon: I.star_o, group: "vault" },
+    { id: "logins",     label: t("nav_logins"),    icon: I.key_o, group: "cat" },
+    { id: "notes",      label: t("nav_notes"),     icon: I.note,  group: "cat" },
+    { id: "cards",      label: t("nav_cards"),     icon: I.card,  group: "cat" },
+    { id: "identities", label: t("nav_identities"),icon: I.account, group: "cat" },
+    { id: "generator",  label: t("nav_generator"), icon: I.dice,  group: "tools" },
+    { id: "settings",   label: t("nav_settings"),  icon: I.cog,   group: "tools" },
+  ];
+
+  const navHtml = (group, header) => `
+    <div class="nav-label">${header}</div>
+    ${sections.filter(s => s.group === group).map(s => `
+      <div class="nav-item ${state.section === s.id ? 'on' : ''}" onclick="setSection('${s.id}')">
+        ${s.icon}<span>${s.label}</span>
+        ${s.count !== undefined ? `<span class="count">${s.count}</span>` : ""}
+      </div>
+    `).join("")}
+  `;
+
+  const list = filteredEntries();
+  const listHtml = list.map((e, i) => `
+    <div class="row ${i === state.selectedIndex ? 'on' : ''}" onclick="selectEntry(${i})">
+      <div class="tile">${escapeHtml(e.title[0] || "?")}</div>
+      <div>
+        <div class="name">${escapeHtml(e.title)}</div>
+        <div class="user">${escapeHtml(e.username || "—")}</div>
+      </div>
+      ${e.favorite ? `<span class="fav">${I.star}</span>` : ""}
+    </div>
+  `).join("");
+
+  const sel = list[state.selectedIndex];
+  const detailHtml = sel ? renderDetail(sel) : `<div style="display:grid;place-items:center;height:100%;color:var(--text-3);font-size:13px;">No entry selected</div>`;
+
+  const sectionTitleLabel = {
+    all: t("nav_all"), favorites: t("nav_fav"), logins: t("nav_logins"),
+    notes: t("nav_notes"), cards: t("nav_cards"), identities: t("nav_identities"),
+    generator: t("nav_generator"), settings: t("nav_settings"),
+  }[state.section];
+  const countLabel = `${list.length} ${list.length === 1 ? t("entry_one") : t("entry_many")}`;
+
+  return `
+  <div class="win main">
+    ${titleBar(t("encryption"))}
+    <div class="main-body">
+      <aside class="sidebar">
+        <div class="search-wrap">
+          <span class="search-icon">${I.search}</span>
+          <input class="search" placeholder="${t("search")}" value="${escapeHtml(state.filter)}" oninput="setFilter(this.value)"/>
+        </div>
+        <nav class="nav">
+          ${navHtml("vault",  t("nav_vault"))}
+          ${navHtml("cat",    t("nav_categories"))}
+          ${navHtml("tools",  t("nav_tools"))}
+        </nav>
+        <div class="account">
+          <div class="avatar">A</div>
+          <div>
+            <div class="name">${t("profile_local")}</div>
+            <div class="meta">${t("encryption")}</div>
+          </div>
+          <button class="icon-btn small" title="Lock" onclick="goToScreen('login')">${I.logout}</button>
+        </div>
+      </aside>
+
+      <section class="listcol">
+        <div class="list-head">
+          <div>
+            <h1>${sectionTitleLabel}</h1>
+            <div class="sub">${countLabel}</div>
+          </div>
+          <button class="btn btn-primary">${I.plus}<span>${t("new_entry")}</span></button>
+        </div>
+        <div class="sort-row">
+          <span>${t("sorted_by")}</span>
+          <span class="sort-pill">${t("sort_recent")} ${I.chev_down}</span>
+        </div>
+        <div class="list">${listHtml}</div>
+      </section>
+
+      <section class="detail">${detailHtml}</section>
+    </div>
+  </div>`;
+}
+
+function renderDetail(e) {
+  const masked = "•".repeat(Math.min(e.password.length, 16));
+  const pwShown = state.revealed ? escapeHtml(e.password) : masked;
+  const notes = e.notes_text || t("notes_empty");
+  return `
+    <div class="detail-head">
+      <div class="detail-tile">${escapeHtml(e.title[0] || "?")}</div>
+      <div>
+        <div class="detail-title">${escapeHtml(e.title)}</div>
+        <div class="detail-meta">
+          <span class="chip">${categoryLabel(e.category)}</span>
+          <span>·</span>
+          <span>${t("updated")} ${e.updated}</span>
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="icon-btn" onclick="toggleFav()">${e.favorite ? `<span style="color:var(--warning)">${I.star}</span>` : I.star_o}</button>
+        <button class="icon-btn">${I.pencil}</button>
+        <button class="icon-btn">${I.more}</button>
+      </div>
+    </div>
+
+    <div class="card-detail">
+      <div class="label">${t("f_user")}</div>
+      <div class="field-row">
+        <div class="field-value">${escapeHtml(e.username || "—")}</div>
+        <button class="icon-btn" onclick="copyText('${escapeHtml(e.username)}', this)">${I.copy}</button>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="pwrow">
+        <div class="label">${t("f_pw")}</div>
+        <div class="ok"><span class="dot"></span> ${I18N[state.lang].strength[3]}</div>
+      </div>
+      <div class="field-row">
+        <div class="field-value mono">${pwShown}</div>
+        <button class="icon-btn" onclick="toggleReveal()">${state.revealed ? I.eye_off : I.eye}</button>
+        <button class="icon-btn" onclick="copyText('${escapeHtml(e.password)}', this)">${I.copy}</button>
+      </div>
+      <div class="strength"><i></i><i></i><i></i><i></i></div>
+
+      <div class="field-divider"></div>
+
+      <div class="label">${t("f_web")}</div>
+      <div class="field-row">
+        <div class="field-value" style="color:var(--accent-hover);">${escapeHtml(e.url || "—")}</div>
+        <button class="icon-btn">${I.open_in}</button>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="label">${t("f_notes")}</div>
+      <div class="field-value" style="color:var(--text-2);margin-top:6px;">${escapeHtml(notes)}</div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="generatePw()">${I.refresh}<span>${t("generate_pw")}</span></button>
+      <button class="btn btn-secondary">${I.history}<span>${t("view_history")}</span></button>
+    </div>
+
+    <div class="audit">
+      <div class="ico">${I.shield_check}</div>
+      <div>
+        <div class="a-title">${t("not_breached")}</div>
+        <div class="a-sub">${t("breach_checked")}</div>
+      </div>
+      ${I.chev_right}
+    </div>
+  `;
+}
+
+// ─── Main-screen helpers ────────────────────────────────────────────
+window.setSection = (s) => { state.section = s; state.selectedIndex = 0; state.revealed = false; render(); };
+window.setFilter  = (v) => { state.filter = v; state.selectedIndex = 0; render(); };
+window.selectEntry = (i) => { state.selectedIndex = i; state.revealed = false; render(); };
+window.toggleReveal = () => { state.revealed = !state.revealed; render(); };
+window.toggleFav = () => {
+  const list = filteredEntries();
+  const e = list[state.selectedIndex];
+  if (e) { e.favorite = !e.favorite; render(); }
+};
+window.copyText = (text, btn) => {
+  if (navigator.clipboard) navigator.clipboard.writeText(text || "").catch(()=>{});
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<span style="color:var(--success)">${I.check_sm}</span>`;
+  setTimeout(() => { btn.innerHTML = orig; }, 900);
+};
+window.generatePw = () => {
+  const list = filteredEntries();
+  const e = list[state.selectedIndex];
+  if (!e) return;
+  const set = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*?";
+  let out = "";
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  for (let i=0;i<16;i++) out += set[arr[i] % set.length];
+  e.password = out;
+  state.revealed = true;
+  render();
+};
+window.goToScreen = (s) => {
+  state.screen = s;
+  document.body.dataset.screen = s;
+  document.querySelectorAll("#screenPicker .pb-btn").forEach(b => b.classList.toggle("on", b.dataset.screen === s));
+  render();
+};
+
+// ─── Renderer ───────────────────────────────────────────────────────
+function render() {
+  // Persist password inputs across renders
+  const stash = {};
+  document.querySelectorAll("input").forEach(el => { if (el.id) stash[el.id] = el.value; });
+
+  const stage = document.getElementById("stage");
+  if (state.screen === "login")    stage.innerHTML = renderLogin();
+  else if (state.screen === "register") stage.innerHTML = renderRegister();
+  else                                  stage.innerHTML = renderMain();
+
+  // Wire up password inputs to update state on type
+  const pw = document.getElementById("loginPw");
+  if (pw) pw.addEventListener("input", e => { state.loginPassword = e.target.value; });
+
+  const rpw = document.getElementById("regPw");
+  if (rpw) rpw.addEventListener("input", e => { state.regPw = e.target.value; render(); });
+  const rcf = document.getElementById("regConf");
+  if (rcf) rcf.addEventListener("input", e => { state.regConfirm = e.target.value; render(); });
+}
+
+render();
+</script>
+</body>
+</html>

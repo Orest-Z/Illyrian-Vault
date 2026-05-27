@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Light — warm gray + deep indigo accent -->
+
+    <LinearGradientBrush x:Key="BrushWindowGrad" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F5F6F8" Offset="0"/>
+        <GradientStop Color="#EEF0F4" Offset="1"/>
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="BrushWindow"        Color="#F5F6F8"/>
+    <SolidColorBrush x:Key="BrushSidebar"       Color="#EEF0F4"/>
+    <SolidColorBrush x:Key="BrushCard"          Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushElevated"      Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushHover"         Color="#EAECF1"/>
+    <SolidColorBrush x:Key="BrushSelected"      Color="#E0E3EC"/>
+
+    <!-- rgba(0,0,0,0.08)=0x14; 0.12=0x1F; 0.25=0x40 -->
+    <SolidColorBrush x:Key="BrushStrokeSubtle"  Color="#14000000"/>
+    <SolidColorBrush x:Key="BrushStroke"        Color="#1F000000"/>
+    <SolidColorBrush x:Key="BrushStrokeStrong"  Color="#40000000"/>
+
+    <SolidColorBrush x:Key="BrushText"          Color="#1A1B22"/>
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="#5B5C66"/>
+    <SolidColorBrush x:Key="BrushTextTertiary"  Color="#8A8B95"/>
+
+    <Color  x:Key="ColorAccent"                 >#4F46E5</Color>
+    <SolidColorBrush x:Key="BrushAccent"        Color="#4F46E5"/>
+    <SolidColorBrush x:Key="BrushAccentHover"   Color="#6366F1"/>
+    <SolidColorBrush x:Key="BrushAccentPress"   Color="#3C36B8"/>
+    <!-- rgba(79,70,229,0.12) → alpha 0x1F -->
+    <SolidColorBrush x:Key="BrushAccentSoft"    Color="#1F4F46E5"/>
+    <SolidColorBrush x:Key="BrushOnAccent"      Color="#FFFFFF"/>
+
+    <SolidColorBrush x:Key="BrushSuccess"       Color="#0E9F6E"/>
+    <SolidColorBrush x:Key="BrushWarning"       Color="#CB7D0F"/>
+    <SolidColorBrush x:Key="BrushDanger"        Color="#DC2626"/>
+    <SolidColorBrush x:Key="BrushSuccessSoft"   Color="#330E9F6E"/>
+    <SolidColorBrush x:Key="BrushWarningSoft"   Color="#33CB7D0F"/>
+
+</ResourceDictionary>

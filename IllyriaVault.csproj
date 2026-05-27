@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>IllyriaVault</AssemblyName>
+    <RootNamespace>IllyriaVault</RootNamespace>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.11.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.5" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+</Project>

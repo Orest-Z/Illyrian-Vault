@@ -1,0 +1,21 @@
+<Application x:Class="IllyriaVault.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        No StartupUri here — we handle startup manually in App.xaml.cs
+        so we can check whether the vault already exists and route to
+        Login or Register accordingly.
+    -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 1. Theme first — brushes must exist before styles reference them -->
+                <ResourceDictionary Source="Resources/Themes/RedTheme.xaml"/>
+                <!-- 2. Localization strings -->
+                <ResourceDictionary Source="Resources/Localization/Strings.en.xaml"/>
+                <!-- 3. Global styles — references the brushes above via DynamicResource -->
+                <ResourceDictionary Source="Resources/Styles/GlobalStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

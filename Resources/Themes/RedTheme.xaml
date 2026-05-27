@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Kuq e Zi — obsidian black + blood red accent -->
+
+    <LinearGradientBrush x:Key="BrushWindowGrad" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0B0B0C" Offset="0"/>
+        <GradientStop Color="#0F0A0B" Offset="1"/>
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="BrushWindow"        Color="#0B0B0C"/>
+    <SolidColorBrush x:Key="BrushSidebar"       Color="#0E0E10"/>
+    <SolidColorBrush x:Key="BrushCard"          Color="#121214"/>
+    <SolidColorBrush x:Key="BrushElevated"      Color="#1A1A1D"/>
+    <SolidColorBrush x:Key="BrushHover"         Color="#1F1F23"/>
+    <SolidColorBrush x:Key="BrushSelected"      Color="#2A1416"/>
+
+    <!-- Strokes: ARGB — alpha channel first in WPF hex (#AARRGGBB)         -->
+    <!-- rgba(255,255,255,0.10) → 0x1A; 0.18 → 0x2E; 0.32 → 0x52           -->
+    <SolidColorBrush x:Key="BrushStrokeSubtle"  Color="#1AFFFFFF"/>
+    <SolidColorBrush x:Key="BrushStroke"        Color="#2EFFFFFF"/>
+    <SolidColorBrush x:Key="BrushStrokeStrong"  Color="#52FFFFFF"/>
+
+    <SolidColorBrush x:Key="BrushText"          Color="#F2F2F2"/>
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="#9A9AA0"/>
+    <SolidColorBrush x:Key="BrushTextTertiary"  Color="#6B6B72"/>
+
+    <Color  x:Key="ColorAccent"                 >#D61C22</Color>
+    <SolidColorBrush x:Key="BrushAccent"        Color="#D61C22"/>
+    <SolidColorBrush x:Key="BrushAccentHover"   Color="#E64048"/>
+    <SolidColorBrush x:Key="BrushAccentPress"   Color="#B8161B"/>
+    <!-- rgba(214,28,34,0.20) → alpha 0x33 -->
+    <SolidColorBrush x:Key="BrushAccentSoft"    Color="#33D61C22"/>
+    <SolidColorBrush x:Key="BrushOnAccent"      Color="#FFFFFF"/>
+
+    <SolidColorBrush x:Key="BrushSuccess"       Color="#10B981"/>
+    <SolidColorBrush x:Key="BrushWarning"       Color="#F59E0B"/>
+    <SolidColorBrush x:Key="BrushDanger"        Color="#EF4444"/>
+    <SolidColorBrush x:Key="BrushSuccessSoft"   Color="#3310B981"/>
+    <SolidColorBrush x:Key="BrushWarningSoft"   Color="#33F59E0B"/>
+
+</ResourceDictionary>

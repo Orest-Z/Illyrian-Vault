@@ -1,0 +1,148 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0/win-x64",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {},
+    ".NETCoreApp,Version=v10.0/win-x64": {
+      "IllyriaVault/1.0.0": {
+        "dependencies": {
+          "CommunityToolkit.Mvvm": "8.4.0",
+          "MahApps.Metro.IconPacks.Material": "4.11.0",
+          "Microsoft.Data.Sqlite.Core": "9.0.5",
+          "SQLitePCLRaw.bundle_e_sqlcipher": "2.1.10"
+        },
+        "runtime": {
+          "IllyriaVault.dll": {}
+        }
+      },
+      "CommunityToolkit.Mvvm/8.4.0": {
+        "runtime": {
+          "lib/net8.0/CommunityToolkit.Mvvm.dll": {
+            "assemblyVersion": "8.4.0.0",
+            "fileVersion": "8.4.0.1"
+          }
+        }
+      },
+      "MahApps.Metro.IconPacks.Material/4.11.0": {
+        "runtime": {
+          "lib/net5.0-windows7.0/MahApps.Metro.IconPacks.Core.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.11.0.12"
+          },
+          "lib/net5.0-windows7.0/MahApps.Metro.IconPacks.Material.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.11.0.12"
+          }
+        }
+      },
+      "Microsoft.Data.Sqlite.Core/9.0.5": {
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.10"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Data.Sqlite.dll": {
+            "assemblyVersion": "9.0.5.0",
+            "fileVersion": "9.0.525.21604"
+          }
+        }
+      },
+      "SQLitePCLRaw.bundle_e_sqlcipher/2.1.10": {
+        "dependencies": {
+          "SQLitePCLRaw.lib.e_sqlcipher": "2.1.10",
+          "SQLitePCLRaw.provider.e_sqlcipher": "2.1.10"
+        },
+        "runtime": {
+          "lib/netstandard2.0/SQLitePCLRaw.batteries_v2.dll": {
+            "assemblyVersion": "2.1.10.2445",
+            "fileVersion": "2.1.10.2445"
+          }
+        }
+      },
+      "SQLitePCLRaw.core/2.1.10": {
+        "runtime": {
+          "lib/netstandard2.0/SQLitePCLRaw.core.dll": {
+            "assemblyVersion": "2.1.10.2445",
+            "fileVersion": "2.1.10.2445"
+          }
+        }
+      },
+      "SQLitePCLRaw.lib.e_sqlcipher/2.1.10": {
+        "native": {
+          "runtimes/win-x64/native/e_sqlcipher.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "SQLitePCLRaw.provider.e_sqlcipher/2.1.10": {
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.10"
+        },
+        "runtime": {
+          "lib/net6.0-windows7.0/SQLitePCLRaw.provider.e_sqlcipher.dll": {
+            "assemblyVersion": "2.1.10.2445",
+            "fileVersion": "2.1.10.2445"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "IllyriaVault/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CommunityToolkit.Mvvm/8.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-tqVU8yc/ADO9oiTRyTnwhFN68hCwvkliMierptWOudIAvWY1mWCh5VFh+guwHJmpMwfg0J0rY+yyd5Oy7ty9Uw==",
+      "path": "communitytoolkit.mvvm/8.4.0",
+      "hashPath": "communitytoolkit.mvvm.8.4.0.nupkg.sha512"
+    },
+    "MahApps.Metro.IconPacks.Material/4.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ZCuuxWHvXxl39XBYXk4PCMUVtw1pevT5AE1qsj7VRy2tRtDYbzHWYW0FbnH+Vf0rP7BogZrRlKns3zFEkDEjFQ==",
+      "path": "mahapps.metro.iconpacks.material/4.11.0",
+      "hashPath": "mahapps.metro.iconpacks.material.4.11.0.nupkg.sha512"
+    },
+    "Microsoft.Data.Sqlite.Core/9.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cP5eBSqra4Ae80X72g0h2N+jdrA4BgoMQmz9JaQmKAEXUHw9N21DPIBqIyMjOo2fK9ISiGytlAOxBAJf1hEvqg==",
+      "path": "microsoft.data.sqlite.core/9.0.5",
+      "hashPath": "microsoft.data.sqlite.core.9.0.5.nupkg.sha512"
+    },
+    "SQLitePCLRaw.bundle_e_sqlcipher/2.1.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-aWxuhHZjE27/u1S8/mJ+wwvKY6qJ83PGODTiftTWOh41+tGjstwIpPPnyvuYyZ9JXQlnErkTvQZziBeamj0DVg==",
+      "path": "sqlitepclraw.bundle_e_sqlcipher/2.1.10",
+      "hashPath": "sqlitepclraw.bundle_e_sqlcipher.2.1.10.nupkg.sha512"
+    },
+    "SQLitePCLRaw.core/2.1.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Ii8JCbC7oiVclaE/mbDEK000EFIJ+ShRPwAvvV89GOZhQ+ZLtlnSWl6ksCNMKu/VGXA4Nfi2B7LhN/QFN9oBcw==",
+      "path": "sqlitepclraw.core/2.1.10",
+      "hashPath": "sqlitepclraw.core.2.1.10.nupkg.sha512"
+    },
+    "SQLitePCLRaw.lib.e_sqlcipher/2.1.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-IPLfZkNN9qnlk8IH7L4Z5xB0gWdQm4HCftZ2LVE54h17tRxjzUbwvx+3MfPE5nR/OgoeiQE2rsYycESXUekPMQ==",
+      "path": "sqlitepclraw.lib.e_sqlcipher/2.1.10",
+      "hashPath": "sqlitepclraw.lib.e_sqlcipher.2.1.10.nupkg.sha512"
+    },
+    "SQLitePCLRaw.provider.e_sqlcipher/2.1.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XH9rdwv2+vDdfDymKF49+o5s252L4gdCb4/volPO3IqRBlhIBWTpO7+bS3Ghgzv7Nqh36pgeUSQj3M33iuiRxg==",
+      "path": "sqlitepclraw.provider.e_sqlcipher/2.1.10",
+      "hashPath": "sqlitepclraw.provider.e_sqlcipher.2.1.10.nupkg.sha512"
+    }
+  }
+}
