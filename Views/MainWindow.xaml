@@ -78,7 +78,7 @@
             <Setter Property="Background"   Value="{DynamicResource BrushCard}"/>
             <Setter Property="CornerRadius" Value="9"/>
             <Setter Property="Padding"      Value="7,2"/>
-            <Setter Property="Margin"       Value="auto,0,0,0"/>
+            <Setter Property="Margin"       Value="4,0,0,0"/>
         </Style>
     </Window.Resources>
 
