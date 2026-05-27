@@ -43,18 +43,26 @@ public partial class AuthWindow : Window, INotifyPropertyChanged
         CurrentViewModel = vm;
     }
 
-    private void OnLoginSucceeded(string username)
-    {
-        var main = new MainWindow(username);
-        main.Show();
-        Close();
-    }
+    private void OnLoginSucceeded(string username) => OpenDashboard(username);
+    private void OnVaultCreated(string username)   => OpenDashboard(username);
 
-    private void OnVaultCreated(string username)
+    private void OpenDashboard(string username)
     {
-        var main = new MainWindow(username);
-        main.Show();
-        Close();
+        try
+        {
+            var main = new MainWindow(username);
+            Application.Current.MainWindow = main;
+            main.Show();
+            Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                ex.ToString(),
+                "Illyria Vault — Dashboard failed to open",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     // Allow dragging the window by clicking anywhere on it.
