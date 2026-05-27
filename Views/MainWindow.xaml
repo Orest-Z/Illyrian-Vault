@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:conv="clr-namespace:IllyriaVault.Converters"
         Title="Illyria Vault"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -11,7 +12,77 @@
         Width="1320" Height="800"
         MinWidth="900" MinHeight="600">
 
-    <!-- PHASE 1 STUB — replaced with full 3-column layout in Phase 2 -->
+    <Window.Resources>
+        <conv:EqualityConverter    x:Key="EqConv"/>
+        <conv:FavoriteIconConverter x:Key="FavIcon"/>
+
+        <!-- Nav RadioButton — looks like NavItem but uses RadioButton selection model -->
+        <Style x:Key="NavRadioItem" TargetType="RadioButton">
+            <Setter Property="Height"           Value="36"/>
+            <Setter Property="Margin"           Value="8,1"/>
+            <Setter Property="Padding"          Value="12,0"/>
+            <Setter Property="FontFamily"       Value="{StaticResource FontPrimary}"/>
+            <Setter Property="FontSize"         Value="{StaticResource FontBody}"/>
+            <Setter Property="FontWeight"       Value="Medium"/>
+            <Setter Property="Foreground"       Value="{DynamicResource BrushTextSecondary}"/>
+            <Setter Property="Background"       Value="Transparent"/>
+            <Setter Property="BorderThickness"  Value="0"/>
+            <Setter Property="Cursor"           Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="GroupName"        Value="NavSections"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid>
+                            <Border x:Name="Indicator"
+                                    Width="3" Height="16" CornerRadius="2"
+                                    Background="{DynamicResource BrushAccent}"
+                                    HorizontalAlignment="Left" VerticalAlignment="Center"
+                                    Margin="-5,0,0,0" Visibility="Collapsed"/>
+                            <Border x:Name="Bg"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="8"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                                  HorizontalAlignment="Stretch"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource BrushHover}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource BrushText}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource BrushSelected}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource BrushText}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter TargetName="Indicator" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Small section header label in sidebar nav -->
+        <Style x:Key="NavSectionLabel" TargetType="TextBlock">
+            <Setter Property="FontFamily"  Value="{StaticResource FontPrimary}"/>
+            <Setter Property="FontSize"    Value="{StaticResource FontLabel}"/>
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="Foreground"  Value="{DynamicResource BrushTextTertiary}"/>
+        </Style>
+
+        <!-- Count badge pill used in nav items -->
+        <Style x:Key="CountBadge" TargetType="Border">
+            <Setter Property="Background"   Value="{DynamicResource BrushCard}"/>
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="Padding"      Value="7,2"/>
+            <Setter Property="Margin"       Value="auto,0,0,0"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- Outer border: rounded corners + drop shadow (Win10 compatible) -->
     <Border Margin="20"
             Background="{DynamicResource BrushWindowGrad}"
             BorderBrush="{DynamicResource BrushStrokeSubtle}"
@@ -28,19 +99,21 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Title bar -->
-            <Border Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <!-- ═══ Title bar ════════════════════════════════════════════════════ -->
+            <Border Grid.Row="0" Background="Transparent"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid Margin="16,0,0,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
+                    <!-- Brand -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Width="22" Height="22" CornerRadius="6"
                                 Background="{DynamicResource BrushAccent}">
-                            <iconPacks:PackIconMaterial Kind="ShieldLock"
-                                                        Width="12" Height="12"
+                            <iconPacks:PackIconMaterial Kind="ShieldLock" Width="12" Height="12"
                                                         Foreground="{DynamicResource BrushOnAccent}"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"/>
@@ -60,8 +133,39 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
+                    <!-- Theme + Language seg controls (center) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Theme selector -->
+                        <Border Background="{DynamicResource BrushElevated}"
+                                BorderBrush="{DynamicResource BrushStroke}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="2" Height="28" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource SegButton}" Content="Light" GroupName="ThemeSel"
+                                             IsChecked="{Binding CurrentTheme, Converter={StaticResource EqConv}, ConverterParameter=Light}"/>
+                                <RadioButton Style="{StaticResource SegButton}" Content="Dark" GroupName="ThemeSel"
+                                             IsChecked="{Binding CurrentTheme, Converter={StaticResource EqConv}, ConverterParameter=Dark}"/>
+                                <RadioButton Style="{StaticResource SegButton}" Content="Kuq e Zi" GroupName="ThemeSel"
+                                             IsChecked="{Binding CurrentTheme, Converter={StaticResource EqConv}, ConverterParameter=Red}"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Language selector -->
+                        <Border Background="{DynamicResource BrushElevated}"
+                                BorderBrush="{DynamicResource BrushStroke}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="2" Height="28">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource SegButton}" Content="EN" GroupName="LangSel"
+                                             IsChecked="{Binding CurrentLanguage, Converter={StaticResource EqConv}, ConverterParameter=EN}"/>
+                                <RadioButton Style="{StaticResource SegButton}" Content="SQ" GroupName="LangSel"
+                                             IsChecked="{Binding CurrentLanguage, Converter={StaticResource EqConv}, ConverterParameter=SQ}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
                     <!-- Window controls -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <Button Style="{StaticResource BtnWinControl}" Click="MinimizeClick">
                             <iconPacks:PackIconMaterial Kind="Minus" Width="12" Height="12"/>
                         </Button>
@@ -75,29 +179,588 @@
                 </Grid>
             </Border>
 
-            <!-- Body placeholder — full layout arrives in Phase 2 -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource BrushWindow}"
-                    CornerRadius="0,0,10,10">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <iconPacks:PackIconMaterial Kind="ShieldLock"
-                                               Width="48" Height="48"
+            <!-- ═══ 3-column body ═════════════════════════════════════════════ -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="248"/>
+                    <ColumnDefinition Width="380"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ── Column 0: Sidebar ──────────────────────────────────────── -->
+                <Grid Grid.Column="0"
+                      Background="{DynamicResource BrushSidebar}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Search bar -->
+                    <Border Grid.Row="0" Padding="8,8,8,4">
+                        <Grid>
+                            <TextBox Style="{StaticResource SearchBox}"
+                                     Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <iconPacks:PackIconMaterial Kind="Magnify" Width="14" Height="14"
+                                                        Foreground="{DynamicResource BrushTextTertiary}"
+                                                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Margin="12,0,0,0" IsHitTestVisible="False"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Scrollable nav list -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,4,0,8">
+
+                            <!-- VAULT section -->
+                            <TextBlock Text="{DynamicResource NavVault}"
+                                       Style="{StaticResource NavSectionLabel}"
+                                       Margin="20,12,20,6"/>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=all}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="ViewDashboard" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource NavAll}" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" Style="{StaticResource CountBadge}">
+                                        <TextBlock Text="{Binding TotalCount}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontTag}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </RadioButton>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=favorites}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="Star" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource NavFavorites}" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" Style="{StaticResource CountBadge}">
+                                        <TextBlock Text="{Binding FavoriteCount}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontTag}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </RadioButton>
+
+                            <!-- CATEGORIES section -->
+                            <TextBlock Text="{DynamicResource NavCategories}"
+                                       Style="{StaticResource NavSectionLabel}"
+                                       Margin="20,12,20,6"/>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=logins}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="LoginVariant" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource NavLogins}" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" Style="{StaticResource CountBadge}">
+                                        <TextBlock Text="{Binding LoginCount}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontTag}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </RadioButton>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=notes}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="NoteText" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource NavNotes}" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" Style="{StaticResource CountBadge}">
+                                        <TextBlock Text="{Binding NoteCount}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontTag}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </RadioButton>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=cards}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="CreditCard" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource NavCards}" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" Style="{StaticResource CountBadge}">
+                                        <TextBlock Text="{Binding CardCount}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontTag}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </RadioButton>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=identities}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="AccountBox" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource NavIdentities}" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="2" Style="{StaticResource CountBadge}">
+                                        <TextBlock Text="{Binding IdentityCount}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontTag}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </RadioButton>
+
+                            <!-- TOOLS section -->
+                            <TextBlock Text="{DynamicResource NavTools}"
+                                       Style="{StaticResource NavSectionLabel}"
+                                       Margin="20,12,20,6"/>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=generator}">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="KeyVariant" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{DynamicResource NavGenerator}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                            <RadioButton Style="{StaticResource NavRadioItem}"
+                                         IsChecked="{Binding SelectedSection, Converter={StaticResource EqConv}, ConverterParameter=settings}">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Cog" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{DynamicResource NavSettings}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Account badge -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource BrushElevated}"
+                            BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Margin="12,8,12,12"
+                            Padding="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Avatar -->
+                            <Border Width="30" Height="30" CornerRadius="15"
+                                    Background="{DynamicResource BrushAccent}">
+                                <TextBlock Text="{Binding ProfileInitial}"
+                                           Foreground="{DynamicResource BrushOnAccent}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Name + label -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                                <TextBlock Text="{Binding ProfileUsername}"
+                                           Foreground="{DynamicResource BrushText}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock Text="{DynamicResource ProfileLocal}"
+                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="12"
+                                           Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- Lock button -->
+                            <Button Grid.Column="2" Style="{StaticResource BtnIconSmall}"
+                                    Command="{Binding LockCommand}"
+                                    ToolTip="Lock vault">
+                                <iconPacks:PackIconMaterial Kind="Lock" Width="14" Height="14"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- ── Column 1: Entry list ──────────────────────────────────── -->
+                <Grid Grid.Column="1"
+                      Background="{DynamicResource BrushWindow}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Left stroke -->
+                    <Border Grid.RowSpan="3"
+                            BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                            BorderThickness="1,0,0,0"
+                            IsHitTestVisible="False"/>
+
+                    <!-- Header: title + count + New Entry button -->
+                    <Grid Grid.Row="0" Margin="20,16,16,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource NavAll}"
+                                       Foreground="{DynamicResource BrushText}"
+                                       FontFamily="{StaticResource FontPrimary}"
+                                       FontSize="{StaticResource FontSectionHead}"
+                                       FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding FilteredEntries.Count}"
+                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="{StaticResource FontSmall}"/>
+                                <TextBlock Text=" entries"
+                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="{StaticResource FontSmall}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource BtnPrimary}"
+                                Content="{DynamicResource NewEntry}"
+                                Padding="12,0"/>
+                    </Grid>
+
+                    <!-- Sort row -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal"
+                                Margin="20,0,20,8" VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource SortedBy}"
+                                   Foreground="{DynamicResource BrushTextTertiary}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="{StaticResource FontSmall}"
+                                   VerticalAlignment="Center"/>
+                        <Border CornerRadius="6" Padding="8,4" Margin="4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource SortRecent}"
+                                           Foreground="{DynamicResource BrushText}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="{StaticResource FontSmall}"
+                                           VerticalAlignment="Center"/>
+                                <iconPacks:PackIconMaterial Kind="ChevronDown"
+                                                            Width="10" Height="10"
+                                                            Foreground="{DynamicResource BrushText}"
+                                                            VerticalAlignment="Center"
+                                                            Margin="4,0,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Entry list -->
+                    <ListBox Grid.Row="2"
+                             ItemsSource="{Binding FilteredEntries}"
+                             SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                             Style="{StaticResource CleanListBox}"
+                             Padding="12,0,12,12"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource EntryRow}"/>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Initial tile -->
+                                    <Border Width="36" Height="36" CornerRadius="8"
+                                            Background="{DynamicResource BrushElevated}"
+                                            BorderBrush="{DynamicResource BrushStroke}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="{Binding TileInitial}"
+                                                   Foreground="{DynamicResource BrushAccent}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontWeight="SemiBold" FontSize="14"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- Title + username -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                                        <TextBlock Text="{Binding Model.Title}"
+                                                   Foreground="{DynamicResource BrushText}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Model.Username}"
+                                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Favorite star -->
+                                    <iconPacks:PackIconMaterial Grid.Column="2"
+                                                               Kind="Star" Width="14" Height="14"
+                                                               Foreground="{DynamicResource BrushWarning}"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding IsFavorite, Converter={StaticResource BoolToVis}}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <!-- ── Column 2: Detail panel ────────────────────────────────── -->
+                <Grid Grid.Column="2"
+                      Background="{DynamicResource BrushWindow}">
+
+                    <!-- Right stroke -->
+                    <Border BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                            BorderThickness="1,0,0,0"
+                            IsHitTestVisible="False"/>
+
+                    <!-- Empty state -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="{Binding HasNoSelectedEntry, Converter={StaticResource BoolToVis}}">
+                        <iconPacks:PackIconMaterial Kind="ShieldLock"
+                                                   Width="48" Height="48"
+                                                   Foreground="{DynamicResource BrushAccentSoft}"
+                                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Select an entry to view details"
+                                   Foreground="{DynamicResource BrushTextTertiary}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="{StaticResource FontBody}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,16,0,0"/>
+                    </StackPanel>
+
+                    <!-- Entry detail (scrollable) -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Padding="32,28,32,28"
+                                  Visibility="{Binding HasSelectedEntry, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+
+                            <!-- ── Detail header ── -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Large initial tile -->
+                                <Border Width="56" Height="56" CornerRadius="14"
+                                        Background="{DynamicResource BrushElevated}"
+                                        BorderBrush="{DynamicResource BrushStroke}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="{Binding SelectedEntry.TileInitial}"
                                                Foreground="{DynamicResource BrushAccent}"
-                                               HorizontalAlignment="Center"/>
-                    <TextBlock Text="Illyria Vault"
-                               Foreground="{DynamicResource BrushText}"
-                               FontFamily="{StaticResource FontPrimary}"
-                               FontSize="{StaticResource FontCardHead}"
-                               FontWeight="SemiBold"
-                               HorizontalAlignment="Center"
-                               Margin="0,16,0,8"/>
-                    <TextBlock Text="Vault unlocked successfully. Full UI arrives in Phase 2."
-                               Foreground="{DynamicResource BrushTextSecondary}"
-                               FontFamily="{StaticResource FontPrimary}"
-                               FontSize="{StaticResource FontBody}"
-                               HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontWeight="SemiBold" FontSize="22"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Title + category chip + updated -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+                                    <TextBlock Text="{Binding SelectedEntry.Model.Title}"
+                                               Foreground="{DynamicResource BrushText}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="{StaticResource FontCardHead}"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                        <Border Style="{StaticResource Chip}">
+                                            <TextBlock Text="{Binding SelectedEntry.Model.Category}"
+                                                       Foreground="{DynamicResource BrushAccent}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <TextBlock Foreground="{DynamicResource BrushTextTertiary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   Margin="8,0,0,0">
+                                            <Run Text="{DynamicResource UpdatedLabel}"/>
+                                            <Run Text=" "/>
+                                            <Run Text="{Binding SelectedEntry.UpdatedFormatted}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Action icons: favorite + delete -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                            VerticalAlignment="Top">
+                                    <Button Style="{StaticResource BtnIcon}"
+                                            Command="{Binding ToggleFavoriteCommand}"
+                                            ToolTip="Toggle favorite">
+                                        <iconPacks:PackIconMaterial
+                                            Kind="{Binding SelectedEntry.IsFavorite, Converter={StaticResource FavIcon}}"
+                                            Width="16" Height="16"
+                                            Foreground="{Binding SelectedEntry.IsFavoriteColor}"/>
+                                    </Button>
+                                    <Button Style="{StaticResource BtnIcon}"
+                                            Command="{Binding DeleteEntryCommand}"
+                                            ToolTip="Delete entry">
+                                        <iconPacks:PackIconMaterial Kind="Delete" Width="16" Height="16"
+                                                                    Foreground="{DynamicResource BrushDanger}"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- ── Fields card ── -->
+                            <Border Style="{StaticResource Card}" Margin="0,24,0,0">
+                                <StackPanel>
+                                    <!-- Username row -->
+                                    <TextBlock Text="{DynamicResource FieldUsername}"
+                                               Style="{StaticResource FieldLabel}"/>
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding SelectedEntry.Model.Username}"
+                                                   Foreground="{DynamicResource BrushText}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="{StaticResource FontInput}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Button Grid.Column="1" Style="{StaticResource BtnIconSmall}"
+                                                Command="{Binding CopyUsernameCommand}"
+                                                ToolTip="Copy username">
+                                            <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
+
+                                    <!-- Password row -->
+                                    <TextBlock Text="{DynamicResource FieldPassword}"
+                                               Style="{StaticResource FieldLabel}"/>
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding SelectedEntry.DisplayPassword}"
+                                                   Foreground="{DynamicResource BrushText}"
+                                                   FontFamily="{StaticResource FontMono}"
+                                                   FontSize="{StaticResource FontInput}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Button Grid.Column="1" Style="{StaticResource BtnIconSmall}"
+                                                Command="{Binding TogglePasswordRevealCommand}"
+                                                ToolTip="Show / hide password">
+                                            <iconPacks:PackIconMaterial Kind="Eye" Width="13" Height="13"/>
+                                        </Button>
+                                        <Button Grid.Column="2" Style="{StaticResource BtnIconSmall}"
+                                                Command="{Binding CopyPasswordCommand}"
+                                                ToolTip="Copy password">
+                                            <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
+
+                                    <!-- Website row -->
+                                    <TextBlock Text="{DynamicResource FieldWebsite}"
+                                               Style="{StaticResource FieldLabel}"/>
+                                    <TextBlock Text="{Binding SelectedEntry.Model.Url}"
+                                               Foreground="{DynamicResource BrushText}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="{StaticResource FontInput}"
+                                               Margin="0,8,0,0"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- ── Notes card ── -->
+                            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource FieldNotes}"
+                                               Style="{StaticResource FieldLabel}"/>
+                                    <TextBlock Text="{Binding SelectedEntry.Model.Notes}"
+                                               Foreground="{DynamicResource BrushText}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- ── Audit card ── -->
+                            <Border Background="{DynamicResource BrushCard}"
+                                    BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Padding="16"
+                                    Margin="0,16,0,0"
+                                    Cursor="Hand">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="36" Height="36" CornerRadius="8"
+                                            Background="{DynamicResource BrushSuccessSoft}">
+                                        <iconPacks:PackIconMaterial Kind="ShieldCheck"
+                                                                   Width="16" Height="16"
+                                                                   Foreground="{DynamicResource BrushSuccess}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                        <TextBlock Text="{DynamicResource NotBreached}"
+                                                   Foreground="{DynamicResource BrushText}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="13" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <iconPacks:PackIconMaterial Grid.Column="2"
+                                                               Kind="ChevronRight"
+                                                               Width="14" Height="14"
+                                                               Foreground="{DynamicResource BrushTextSecondary}"
+                                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
         </Grid>
     </Border>
 </Window>

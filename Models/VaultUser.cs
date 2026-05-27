@@ -3,6 +3,7 @@ namespace IllyriaVault.Models;
 public sealed class VaultUser
 {
     public long     Id               { get; set; }
+    public string   Username         { get; set; } = string.Empty;
     public string   DisplayName      { get; set; } = "Local Profile";
     public byte[]   PasswordSalt     { get; set; } = [];
     public byte[]   VerificationHash { get; set; } = [];

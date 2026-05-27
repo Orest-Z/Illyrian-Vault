@@ -1,15 +1,29 @@
 using System.Windows;
 using System.Windows.Input;
+using IllyriaVault.ViewModels;
 
 namespace IllyriaVault.Views;
 
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    private readonly MainViewModel _vm;
+
+    public MainWindow(string username)
     {
         InitializeComponent();
-        // MainViewModel will be wired here in Phase 2.
-        // For now the window just confirms the vault opened successfully.
+        _vm = new MainViewModel(App.Database, App.Encryption, App.SessionKey, username);
+        DataContext = _vm;
+
+        _vm.LockRequested += OnLockRequested;
+
+        Loaded += async (_, _) => await _vm.LoadEntriesCommand.ExecuteAsync(null);
+    }
+
+    private void OnLockRequested()
+    {
+        var auth = new AuthWindow();
+        auth.Show();
+        Close();
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>

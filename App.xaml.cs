@@ -12,6 +12,10 @@ public partial class App : Application
     public static ThemeService        Theme        { get; } = new();
     public static LocalizationService Localization { get; } = new();
 
+    // Raw 32-byte AES key held in memory for the duration of the session.
+    // Set by Login/Register before opening MainWindow; cleared on lock.
+    public static byte[] SessionKey { get; set; } = [];
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

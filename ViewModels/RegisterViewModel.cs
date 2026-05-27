@@ -11,8 +11,9 @@ public partial class RegisterViewModel : BaseViewModel
     private readonly EncryptionService _crypto;
     private readonly DatabaseService   _db;
 
-    public event Action? VaultCreated;
-    public event Action? NavigateToLogin;
+    // VaultCreated carries the username so MainWindow can display it.
+    public event Action<string>? VaultCreated;
+    public event Action?         NavigateToLogin;
 
     // ── Step tracking (1–3) ────────────────────────────────────────────────────
     [ObservableProperty]
@@ -29,7 +30,11 @@ public partial class RegisterViewModel : BaseViewModel
     public bool   IsStep3    => CurrentStep == 3;
     public string StepLabel  => $"{CurrentStep} / 3";
 
-    // ── Step 1: Passwords ──────────────────────────────────────────────────────
+    // ── Step 1: Username + Passwords ──────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(NextCommand))]
+    private string _username = string.Empty;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StrengthScore))]
     [NotifyPropertyChangedFor(nameof(StrengthLabel))]
@@ -84,7 +89,7 @@ public partial class RegisterViewModel : BaseViewModel
 
     private bool CanGoNext() => CurrentStep switch
     {
-        1 => NewPassword.Length >= 8 && NewPassword == ConfirmPassword,
+        1 => !string.IsNullOrWhiteSpace(Username) && NewPassword.Length >= 8 && NewPassword == ConfirmPassword,
         2 => IsKeySaved,
         _ => true,
     };
@@ -112,16 +117,18 @@ public partial class RegisterViewModel : BaseViewModel
             var hexKey     = Convert.ToHexString(key).ToLowerInvariant();
             var verifyHash = _crypto.CreateVerificationHash(key);
 
-            // Write unencrypted sidecar: salt + verification hash only.
+            // Write unencrypted sidecar: salt, verification hash, and username.
             // Login reads this to verify the password before opening the encrypted DB.
             Directory.CreateDirectory(Path.GetDirectoryName(DatabaseService.MetaPath)!);
             await File.WriteAllLinesAsync(DatabaseService.MetaPath, [
                 Convert.ToBase64String(salt),
                 Convert.ToBase64String(verifyHash),
+                Username,
             ]);
 
             var user = new VaultUser
             {
+                Username         = Username,
                 DisplayName      = "Local Profile",
                 PasswordSalt     = salt,
                 VerificationHash = verifyHash,
@@ -129,12 +136,13 @@ public partial class RegisterViewModel : BaseViewModel
                 CreatedAt        = DateTime.UtcNow,
             };
 
+            App.SessionKey = key;
             await _db.OpenAsync(hexKey);
             await _db.SaveUserAsync(user);
 
             NewPassword     = string.Empty;
             ConfirmPassword = string.Empty;
-            VaultCreated?.Invoke();
+            VaultCreated?.Invoke(Username);
         }
         catch (Exception ex)
         {

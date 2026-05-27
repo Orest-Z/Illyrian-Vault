@@ -18,8 +18,26 @@ public partial class EntryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isPasswordRevealed;
 
+    // Observable wrapper so UI reacts when ToggleFavorite runs.
+    [ObservableProperty]
+    private bool _isFavorite;
+
     partial void OnIsPasswordRevealedChanged(bool value) =>
         OnPropertyChanged(nameof(DisplayPassword));
+
+    partial void OnIsFavoriteChanged(bool value)
+    {
+        Model.IsFavorite = value;
+        OnPropertyChanged(nameof(IsFavoriteColor));
+    }
+
+    // Foreground color helper: gold when favorite, muted otherwise.
+    public System.Windows.Media.Brush IsFavoriteColor =>
+        IsFavorite
+            ? (System.Windows.Application.Current.TryFindResource("BrushWarning") as System.Windows.Media.Brush)
+              ?? System.Windows.Media.Brushes.Goldenrod
+            : (System.Windows.Application.Current.TryFindResource("BrushTextSecondary") as System.Windows.Media.Brush)
+              ?? System.Windows.Media.Brushes.Gray;
 
     public string TileInitial      => string.IsNullOrEmpty(Model.Title) ? "?" : Model.Title[0].ToString().ToUpperInvariant();
     public string UpdatedFormatted => Model.UpdatedAt.ToString("MMM dd, yyyy");
@@ -31,9 +49,10 @@ public partial class EntryViewModel : ObservableObject
 
     public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key)
     {
-        Model   = model;
-        _crypto = crypto;
-        _key    = key;
+        Model       = model;
+        _crypto     = crypto;
+        _key        = key;
+        _isFavorite = model.IsFavorite;
     }
 }
 
@@ -46,6 +65,31 @@ public partial class MainViewModel : BaseViewModel
     // Fired when the user locks the vault — MainWindow subscribes and shows AuthWindow.
     public event Action? LockRequested;
 
+    // ── Profile ────────────────────────────────────────────────────────────────
+    public string ProfileUsername { get; }
+    public string ProfileInitial  => string.IsNullOrEmpty(ProfileUsername) ? "?" : ProfileUsername[0].ToString().ToUpperInvariant();
+
+    // ── Theme / Language ───────────────────────────────────────────────────────
+    [ObservableProperty]
+    private string _currentTheme = App.Theme.Current switch
+    {
+        AppTheme.Light => "Light",
+        AppTheme.Dark  => "Dark",
+        _              => "Red",
+    };
+
+    [ObservableProperty]
+    private string _currentLanguage = App.Localization.Current == AppLanguage.Sq ? "SQ" : "EN";
+
+    partial void OnCurrentThemeChanged(string value)
+    {
+        var theme = value switch { "Light" => AppTheme.Light, "Dark" => AppTheme.Dark, _ => AppTheme.Red };
+        App.Theme.Apply(theme);
+    }
+
+    partial void OnCurrentLanguageChanged(string value) =>
+        App.Localization.Apply(value == "SQ" ? AppLanguage.Sq : AppLanguage.En);
+
     // ── Entry collections ──────────────────────────────────────────────────────
     private readonly ObservableCollection<EntryViewModel> _allEntries = [];
 
@@ -53,7 +97,12 @@ public partial class MainViewModel : BaseViewModel
     public ObservableCollection<EntryViewModel> FilteredEntries { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedEntry))]
+    [NotifyPropertyChangedFor(nameof(HasNoSelectedEntry))]
     private EntryViewModel? _selectedEntry;
+
+    public bool HasSelectedEntry  => SelectedEntry is not null;
+    public bool HasNoSelectedEntry => SelectedEntry is null;
 
     // ── Search / filter state ──────────────────────────────────────────────────
     [ObservableProperty]
@@ -68,7 +117,7 @@ public partial class MainViewModel : BaseViewModel
 
     // ── Nav badge counts ───────────────────────────────────────────────────────
     public int TotalCount    => _allEntries.Count;
-    public int FavoriteCount => _allEntries.Count(e => e.Model.IsFavorite);
+    public int FavoriteCount => _allEntries.Count(e => e.IsFavorite);
     public int LoginCount    => _allEntries.Count(e => e.Model.Category == "Login");
     public int NoteCount     => _allEntries.Count(e => e.Model.Category == "Note");
     public int CardCount     => _allEntries.Count(e => e.Model.Category == "Card");
@@ -95,8 +144,8 @@ public partial class MainViewModel : BaseViewModel
     private async Task ToggleFavoriteAsync()
     {
         if (SelectedEntry is null) return;
-        SelectedEntry.Model.IsFavorite = !SelectedEntry.Model.IsFavorite;
-        await _db.SetFavoriteAsync(SelectedEntry.Model.Id, SelectedEntry.Model.IsFavorite);
+        SelectedEntry.IsFavorite = !SelectedEntry.IsFavorite;
+        await _db.SetFavoriteAsync(SelectedEntry.Model.Id, SelectedEntry.IsFavorite);
         RefreshCounts();
     }
 
@@ -127,10 +176,21 @@ public partial class MainViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private void TogglePasswordReveal()
+    {
+        if (SelectedEntry is null) return;
+        SelectedEntry.IsPasswordRevealed = !SelectedEntry.IsPasswordRevealed;
+    }
+
+    [RelayCommand]
     private void NavigateSection(string section) => SelectedSection = section;
 
     [RelayCommand]
-    private void Lock() => LockRequested?.Invoke();
+    private void Lock()
+    {
+        App.SessionKey = [];
+        LockRequested?.Invoke();
+    }
 
     // ── Filtering ──────────────────────────────────────────────────────────────
     private void ApplyFilter()
@@ -139,7 +199,7 @@ public partial class MainViewModel : BaseViewModel
 
         q = SelectedSection switch
         {
-            "favorites"  => q.Where(e => e.Model.IsFavorite),
+            "favorites"  => q.Where(e => e.IsFavorite),
             "logins"     => q.Where(e => e.Model.Category == "Login"),
             "notes"      => q.Where(e => e.Model.Category == "Note"),
             "cards"      => q.Where(e => e.Model.Category == "Card"),
@@ -173,10 +233,11 @@ public partial class MainViewModel : BaseViewModel
         OnPropertyChanged(nameof(IdentityCount));
     }
 
-    public MainViewModel(DatabaseService db, EncryptionService crypto, byte[] sessionKey)
+    public MainViewModel(DatabaseService db, EncryptionService crypto, byte[] sessionKey, string username)
     {
         _db         = db;
         _crypto     = crypto;
         _sessionKey = sessionKey;
+        ProfileUsername = username;
     }
 }

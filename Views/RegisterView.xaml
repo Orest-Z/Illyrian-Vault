@@ -58,7 +58,7 @@
                 </Rectangle>
             </UniformGrid>
 
-            <!-- Step 1: New password -->
+            <!-- Step 1: Username + New password -->
             <StackPanel Visibility="{Binding IsStep1, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="{DynamicResource SetupTitle}"
                            Foreground="{DynamicResource BrushText}"
@@ -67,6 +67,11 @@
                            FontWeight="SemiBold"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,24"/>
+
+                <TextBlock Text="{DynamicResource Username}" Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                <TextBox Style="{StaticResource InputBox}"
+                         Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,16"/>
 
                 <TextBlock Text="{DynamicResource NewPassword}" Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
                 <PasswordBox Style="{StaticResource PasswordInput}"
@@ -161,7 +166,7 @@
                        FontSize="{StaticResource FontSmall}"
                        TextWrapping="Wrap"
                        Margin="0,16,0,0"
-                       Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}}"/>
+                       Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
         </StackPanel>
 
         <!-- Footer buttons -->

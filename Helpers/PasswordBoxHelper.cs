@@ -57,7 +57,10 @@ public static class PasswordBoxHelper
     {
         if (sender is not PasswordBox box) return;
         _updating = true;
-        SetBoundPassword(box, box.Password);
+        // SetCurrentValue keeps the TwoWay binding expression intact so the ViewModel
+        // source property is updated on every keystroke. SetValue would overwrite the
+        // binding with a literal and sever the link after the first character.
+        box.SetCurrentValue(BoundPasswordProperty, box.Password);
         _updating = false;
     }
 }

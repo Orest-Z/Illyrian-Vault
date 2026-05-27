@@ -11,8 +11,13 @@ public partial class LoginViewModel : BaseViewModel
     private readonly DatabaseService   _db;
 
     // AuthWindow subscribes to these to navigate between screens.
-    public event Action? LoginSucceeded;
-    public event Action? NavigateToRegister;
+    // LoginSucceeded carries the username so MainWindow can display it.
+    public event Action<string>? LoginSucceeded;
+    public event Action?         NavigateToRegister;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProfileInitial))]
+    private string _username = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(UnlockCommand))]
@@ -21,10 +26,17 @@ public partial class LoginViewModel : BaseViewModel
     [ObservableProperty]
     private string _vaultPath = DatabaseService.DbPath;
 
+    public string ProfileInitial =>
+        string.IsNullOrEmpty(Username) ? "?" : Username[0].ToString().ToUpperInvariant();
+
     public LoginViewModel(EncryptionService crypto, DatabaseService db)
     {
         _crypto = crypto;
         _db     = db;
+
+        // Pre-fill username from the vault.meta sidecar if the vault exists.
+        if (db.VaultExists)
+            _ = PreFillUsernameAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanUnlock))]
@@ -48,7 +60,9 @@ public partial class LoginViewModel : BaseViewModel
                 return;
             }
 
-            var hexKey = _crypto.DeriveHexKey(MasterPassword, meta.Value.Salt);
+            var key    = _crypto.DeriveKey(MasterPassword, meta.Value.Salt);
+            App.SessionKey = key;
+            var hexKey = Convert.ToHexString(key).ToLowerInvariant();
             var opened = await _db.TryOpenAsync(hexKey);
             if (!opened)
             {
@@ -56,8 +70,9 @@ public partial class LoginViewModel : BaseViewModel
                 return;
             }
 
+            var username   = string.IsNullOrWhiteSpace(Username) ? meta.Value.Username : Username;
             MasterPassword = string.Empty;
-            LoginSucceeded?.Invoke();
+            LoginSucceeded?.Invoke(username);
         }
         finally
         {
@@ -65,18 +80,27 @@ public partial class LoginViewModel : BaseViewModel
         }
     }
 
-    private bool CanUnlock() => !string.IsNullOrEmpty(MasterPassword) && !IsBusy;
+    private bool CanUnlock() =>
+        !string.IsNullOrEmpty(MasterPassword) &&
+        !IsBusy;
 
     [RelayCommand]
     private void NavigateRegister() => NavigateToRegister?.Invoke();
 
-    // Reads the plaintext sidecar file that stores just the salt + verification hash.
-    // This lets us confirm the password BEFORE trying to open the encrypted SQLCipher DB.
-    private static async Task<(byte[] Salt, byte[] Hash)?> ReadMetaAsync()
+    private async Task PreFillUsernameAsync()
+    {
+        var meta = await ReadMetaAsync();
+        if (meta is not null && !string.IsNullOrEmpty(meta.Value.Username))
+            Username = meta.Value.Username;
+    }
+
+    // Reads the plaintext sidecar: line 0 = salt, line 1 = verification hash, line 2 = username.
+    private static async Task<(byte[] Salt, byte[] Hash, string Username)?> ReadMetaAsync()
     {
         if (!File.Exists(DatabaseService.MetaPath)) return null;
         var lines = await File.ReadAllLinesAsync(DatabaseService.MetaPath);
         if (lines.Length < 2) return null;
-        return (Convert.FromBase64String(lines[0]), Convert.FromBase64String(lines[1]));
+        var username = lines.Length >= 3 ? lines[2] : string.Empty;
+        return (Convert.FromBase64String(lines[0]), Convert.FromBase64String(lines[1]), username);
     }
 }

@@ -10,10 +10,13 @@ namespace IllyriaVault.ViewModels;
 public abstract partial class BaseViewModel : ObservableObject
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorMessage = string.Empty;
 
     [ObservableProperty]
     private bool _isBusy;
+
+    public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
     protected void ClearError() => ErrorMessage = string.Empty;
 }

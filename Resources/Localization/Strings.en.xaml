@@ -17,6 +17,8 @@
     <sys:String x:Key="CreateVault">Create a new vault</sys:String>
 
     <!-- Register -->
+    <sys:String x:Key="Username">Username</sys:String>
+    <sys:String x:Key="UsernamePlaceholder">Choose a display name</sys:String>
     <sys:String x:Key="SetupTitle">Set up your vault</sys:String>
     <sys:String x:Key="SetupSub">Your master password is the only key to your vault. We cannot recover it for you — choose wisely and save the backup key.</sys:String>
     <sys:String x:Key="StepWord">Step</sys:String>

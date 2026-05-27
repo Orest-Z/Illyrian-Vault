@@ -15,6 +15,8 @@
     <sys:String x:Key="ForgotPassword">Harruat fjalëkalimin?</sys:String>
     <sys:String x:Key="CreateVault">Krijo kasafortë të re</sys:String>
 
+    <sys:String x:Key="Username">Emri i përdoruesit</sys:String>
+    <sys:String x:Key="UsernamePlaceholder">Zgjidhni një emër ekrani</sys:String>
     <sys:String x:Key="SetupTitle">Konfiguro kasafortën</sys:String>
     <sys:String x:Key="SetupSub">Fjalëkalimi juaj kryesor është çelësi i vetëm. Nuk mund ta rikuperojmë — zgjidhni me kujdes dhe ruani çelësin rezervë.</sys:String>
     <sys:String x:Key="StepWord">Hapi</sys:String>

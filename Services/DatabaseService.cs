@@ -82,6 +82,7 @@ public sealed class DatabaseService : IAsyncDisposable
         await ExecAsync("""
             CREATE TABLE IF NOT EXISTS Users (
                 Id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                Username         TEXT NOT NULL DEFAULT '',
                 DisplayName      TEXT NOT NULL DEFAULT 'Local Profile',
                 PasswordSalt     BLOB NOT NULL,
                 VerificationHash BLOB NOT NULL,
@@ -93,6 +94,7 @@ public sealed class DatabaseService : IAsyncDisposable
         await ExecAsync("""
             CREATE TABLE IF NOT EXISTS PasswordEntries (
                 Id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                UserId            INTEGER NOT NULL DEFAULT 1,
                 Title             TEXT    NOT NULL,
                 Username          TEXT    NOT NULL DEFAULT '',
                 EncryptedPassword TEXT    NOT NULL DEFAULT '',
@@ -104,6 +106,12 @@ public sealed class DatabaseService : IAsyncDisposable
                 UpdatedAt         TEXT    NOT NULL
             );
             """);
+
+        // Migrate older vaults that were created before Phase 2.
+        try { await ExecAsync("ALTER TABLE Users ADD COLUMN Username TEXT NOT NULL DEFAULT '';"); }
+        catch (Microsoft.Data.Sqlite.SqliteException) { }
+        try { await ExecAsync("ALTER TABLE PasswordEntries ADD COLUMN UserId INTEGER NOT NULL DEFAULT 1;"); }
+        catch (Microsoft.Data.Sqlite.SqliteException) { }
     }
 
     // ── User ───────────────────────────────────────────────────────────────────
@@ -112,9 +120,10 @@ public sealed class DatabaseService : IAsyncDisposable
     {
         await ExecAsync("""
             INSERT OR REPLACE INTO Users
-                (Id, DisplayName, PasswordSalt, VerificationHash, RecoveryKeyHash, CreatedAt)
-            VALUES (1, @Name, @Salt, @Hash, @RecoveryHash, @Created);
+                (Id, Username, DisplayName, PasswordSalt, VerificationHash, RecoveryKeyHash, CreatedAt)
+            VALUES (1, @Username, @Name, @Salt, @Hash, @RecoveryHash, @Created);
             """,
+            P("@Username",    user.Username),
             P("@Name",        user.DisplayName),
             P("@Salt",        user.PasswordSalt),
             P("@Hash",        user.VerificationHash),
@@ -130,6 +139,7 @@ public sealed class DatabaseService : IAsyncDisposable
         return new VaultUser
         {
             Id               = reader.GetInt64(reader.GetOrdinal("Id")),
+            Username         = reader.GetString(reader.GetOrdinal("Username")),
             DisplayName      = reader.GetString(reader.GetOrdinal("DisplayName")),
             PasswordSalt     = (byte[])reader["PasswordSalt"],
             VerificationHash = (byte[])reader["VerificationHash"],
@@ -140,10 +150,10 @@ public sealed class DatabaseService : IAsyncDisposable
 
     // ── PasswordEntry CRUD ─────────────────────────────────────────────────────
 
-    public async Task<List<PasswordEntry>> GetAllEntriesAsync()
+    public async Task<List<PasswordEntry>> GetAllEntriesAsync(long userId = 1)
     {
         var list = new List<PasswordEntry>();
-        await using var cmd    = Cmd("SELECT * FROM PasswordEntries ORDER BY UpdatedAt DESC;");
+        await using var cmd    = Cmd("SELECT * FROM PasswordEntries WHERE UserId = @Uid ORDER BY UpdatedAt DESC;", P("@Uid", userId));
         await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync()) list.Add(Map(reader));
         return list;
@@ -154,9 +164,10 @@ public sealed class DatabaseService : IAsyncDisposable
         e.CreatedAt = e.UpdatedAt = DateTime.UtcNow;
         await ExecAsync("""
             INSERT INTO PasswordEntries
-                (Title, Username, EncryptedPassword, Url, Notes, Category, IsFavorite, CreatedAt, UpdatedAt)
-            VALUES (@Title, @User, @Pw, @Url, @Notes, @Cat, @Fav, @Created, @Updated);
+                (UserId, Title, Username, EncryptedPassword, Url, Notes, Category, IsFavorite, CreatedAt, UpdatedAt)
+            VALUES (@Uid, @Title, @User, @Pw, @Url, @Notes, @Cat, @Fav, @Created, @Updated);
             """,
+            P("@Uid",     e.UserId),
             P("@Title",   e.Title),
             P("@User",    e.Username),
             P("@Pw",      e.EncryptedPassword),
@@ -226,6 +237,7 @@ public sealed class DatabaseService : IAsyncDisposable
     private static PasswordEntry Map(SqliteDataReader r) => new()
     {
         Id                = r.GetInt64(r.GetOrdinal("Id")),
+        UserId            = r.GetInt64(r.GetOrdinal("UserId")),
         Title             = r.GetString(r.GetOrdinal("Title")),
         Username          = r.GetString(r.GetOrdinal("Username")),
         EncryptedPassword = r.GetString(r.GetOrdinal("EncryptedPassword")),

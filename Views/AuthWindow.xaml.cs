@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
 using IllyriaVault.ViewModels;
 
 namespace IllyriaVault.Views;
@@ -44,19 +43,16 @@ public partial class AuthWindow : Window, INotifyPropertyChanged
         CurrentViewModel = vm;
     }
 
-    private void OnLoginSucceeded()
+    private void OnLoginSucceeded(string username)
     {
-        // Store the derived session key (LoginViewModel already opened the DB).
-        // Open MainWindow, close AuthWindow.
-        var main = new MainWindow();
+        var main = new MainWindow(username);
         main.Show();
         Close();
     }
 
-    private void OnVaultCreated()
+    private void OnVaultCreated(string username)
     {
-        // Vault was just created and the DB is open — go straight to the main window.
-        var main = new MainWindow();
+        var main = new MainWindow(username);
         main.Show();
         Close();
     }

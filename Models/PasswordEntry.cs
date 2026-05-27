@@ -3,6 +3,7 @@ namespace IllyriaVault.Models;
 public sealed class PasswordEntry
 {
     public long     Id                { get; set; }
+    public long     UserId            { get; set; }
     public string   Title             { get; set; } = string.Empty;
     public string   Username          { get; set; } = string.Empty;
     public string   EncryptedPassword { get; set; } = string.Empty;

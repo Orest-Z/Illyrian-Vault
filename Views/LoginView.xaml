@@ -1,52 +1,172 @@
 <UserControl x:Class="IllyriaVault.Views.LoginView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:helpers="clr-namespace:IllyriaVault.Helpers">
 
-    <!-- PHASE 1 STUB — replaced with full HTML-matched layout in Phase 2 -->
+    <!-- 2-column body: left hero + right form (matches HTML .login-body layout) -->
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="440"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Minimal title bar (dragging handled by AuthWindow) -->
-        <Border Grid.Row="0" Background="Transparent">
-            <TextBlock Text="Illyria Vault"
-                       Foreground="{DynamicResource BrushText}"
-                       FontFamily="{StaticResource FontPrimary}"
-                       FontSize="{StaticResource FontBody}"
-                       FontWeight="SemiBold"
-                       VerticalAlignment="Center"
-                       Margin="16,0"/>
+        <!-- ── Left hero panel ─────────────────────────────────────────────── -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource BrushCard}"
+                BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Margin="8,8,12,24"
+                Padding="48">
+            <Border.Effect>
+                <!-- Radial accent glow (HTML .login-hero::before) -->
+                <DropShadowEffect Color="{DynamicResource ColorAccent}" BlurRadius="80" ShadowDepth="0" Opacity="0.12" Direction="45"/>
+            </Border.Effect>
+
+            <StackPanel VerticalAlignment="Center">
+                <!-- Shield mark -->
+                <Border Width="56" Height="56" CornerRadius="14"
+                        Background="{DynamicResource BrushAccent}">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource ColorAccent}" BlurRadius="36" ShadowDepth="0" Opacity="0.55"/>
+                    </Border.Effect>
+                    <iconPacks:PackIconMaterial Kind="ShieldLock"
+                                               Width="26" Height="26"
+                                               Foreground="{DynamicResource BrushOnAccent}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- App name -->
+                <TextBlock Text="{DynamicResource AppName}"
+                           Foreground="{DynamicResource BrushText}"
+                           FontFamily="{StaticResource FontPrimary}"
+                           FontSize="34"
+                           FontWeight="SemiBold"
+                           Margin="0,24,0,8"
+                           LineHeight="37"/>
+                <TextBlock Text="{DynamicResource AppTagline}"
+                           Foreground="{DynamicResource BrushTextSecondary}"
+                           FontFamily="{StaticResource FontPrimary}"
+                           FontSize="14"/>
+
+                <!-- Feature list -->
+                <StackPanel Margin="0,32,0,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Border Width="32" Height="32" CornerRadius="8"
+                                Background="{DynamicResource BrushAccentSoft}">
+                            <iconPacks:PackIconMaterial Kind="Lock" Width="14" Height="14"
+                                                        Foreground="{DynamicResource BrushAccent}"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="AES-256 encrypted vault"
+                                   Foreground="{DynamicResource BrushText}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Border Width="32" Height="32" CornerRadius="8"
+                                Background="{DynamicResource BrushAccentSoft}">
+                            <iconPacks:PackIconMaterial Kind="CloudOffOutline" Width="14" Height="14"
+                                                        Foreground="{DynamicResource BrushAccent}"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="100% offline — no cloud sync"
+                                   Foreground="{DynamicResource BrushText}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="32" Height="32" CornerRadius="8"
+                                Background="{DynamicResource BrushAccentSoft}">
+                            <iconPacks:PackIconMaterial Kind="ShieldKey" Width="14" Height="14"
+                                                        Foreground="{DynamicResource BrushAccent}"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="PBKDF2 · 600 000 iterations"
+                                   Foreground="{DynamicResource BrushText}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
         </Border>
 
-        <!-- Login form -->
-        <StackPanel Grid.Row="1"
-                    Width="360"
-                    HorizontalAlignment="Center"
+        <!-- ── Right form panel ────────────────────────────────────────────── -->
+        <StackPanel Grid.Column="1"
                     VerticalAlignment="Center"
-                    Margin="0,0,0,40">
+                    Margin="0,8,40,24">
 
+            <!-- Title + subtitle -->
             <TextBlock Text="{DynamicResource LoginWelcome}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
                        FontSize="{StaticResource FontCardHead}"
                        FontWeight="SemiBold"
                        Margin="0,0,0,8"/>
-
             <TextBlock Text="{DynamicResource LoginSubtitle}"
                        Foreground="{DynamicResource BrushTextSecondary}"
                        FontFamily="{StaticResource FontPrimary}"
                        FontSize="{StaticResource FontBody}"
                        TextWrapping="Wrap"
-                       Margin="0,0,0,24"/>
+                       Margin="0,0,0,28"/>
 
-            <!-- Master password -->
+            <!-- Profile chip -->
+            <Border Background="{DynamicResource BrushElevated}"
+                    BorderBrush="{DynamicResource BrushStroke}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="12,10"
+                    Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource BrushAccent}">
+                        <TextBlock Text="{Binding ProfileInitial}"
+                                   Foreground="{DynamicResource BrushOnAccent}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <TextBlock Text="{Binding Username}"
+                                   Foreground="{DynamicResource BrushText}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding VaultPath}"
+                                   Foreground="{DynamicResource BrushTextTertiary}"
+                                   FontFamily="{StaticResource FontMono}"
+                                   FontSize="11"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Username label + input -->
+            <TextBlock Text="{DynamicResource Username}"
+                       Style="{StaticResource FieldLabel}"
+                       Margin="0,0,0,8"/>
+            <TextBox Style="{StaticResource InputBox}"
+                     Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,0,0,16"/>
+
+            <!-- Master password label + input -->
             <TextBlock Text="{DynamicResource MasterPassword}"
                        Style="{StaticResource FieldLabel}"
                        Margin="0,0,0,8"/>
-
             <PasswordBox Style="{StaticResource PasswordInput}"
                          helpers:PasswordBoxHelper.BindPassword="True"
                          helpers:PasswordBoxHelper.BoundPassword="{Binding MasterPassword, Mode=TwoWay}"/>
@@ -57,25 +177,24 @@
                        FontFamily="{StaticResource FontPrimary}"
                        FontSize="{StaticResource FontSmall}"
                        TextWrapping="Wrap"
-                       Margin="0,8,0,0"
-                       Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}}"/>
+                       Margin="0,10,0,0"
+                       Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
 
             <!-- Unlock button -->
             <Button Content="{DynamicResource UnlockButton}"
                     Style="{StaticResource BtnPrimary}"
                     Command="{Binding UnlockCommand}"
-                    Margin="0,24,0,0"/>
+                    Margin="0,28,0,0"/>
 
             <!-- Divider -->
             <Border Height="1"
                     Background="{DynamicResource BrushStrokeSubtle}"
                     Margin="0,24"/>
 
-            <!-- Create vault button -->
+            <!-- Create vault -->
             <Button Content="{DynamicResource CreateVault}"
                     Style="{StaticResource BtnSecondary}"
                     Command="{Binding NavigateRegisterCommand}"/>
-
         </StackPanel>
     </Grid>
 </UserControl>
