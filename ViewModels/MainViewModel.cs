@@ -65,6 +65,9 @@ public partial class MainViewModel : BaseViewModel
     // Fired when the user locks the vault — MainWindow subscribes and shows AuthWindow.
     public event Action? LockRequested;
 
+    // Fired when the user clicks New Entry — MainWindow opens AddEntryWindow.
+    public event Action? NewEntryRequested;
+
     // ── Profile ────────────────────────────────────────────────────────────────
     public string ProfileUsername { get; }
     public string ProfileInitial  => string.IsNullOrEmpty(ProfileUsername) ? "?" : ProfileUsername[0].ToString().ToUpperInvariant();
@@ -125,6 +128,9 @@ public partial class MainViewModel : BaseViewModel
 
     // ── Commands ───────────────────────────────────────────────────────────────
     [RelayCommand]
+    private void RequestNewEntry() => NewEntryRequested?.Invoke();
+
+    [RelayCommand]
     private async Task LoadEntriesAsync()
     {
         IsBusy = true;
@@ -184,6 +190,15 @@ public partial class MainViewModel : BaseViewModel
 
     [RelayCommand]
     private void NavigateSection(string section) => SelectedSection = section;
+
+    public async Task InsertNewEntryAsync(PasswordEntry e)
+    {
+        e.Id = await _db.InsertEntryAsync(e);
+        _allEntries.Add(new EntryViewModel(e, _crypto, _sessionKey));
+        ApplyFilter();
+        RefreshCounts();
+        SelectedEntry = FilteredEntries.FirstOrDefault(x => x.Model.Id == e.Id);
+    }
 
     [RelayCommand]
     private async Task LockAsync()

@@ -63,6 +63,12 @@
     <sys:String x:Key="SortedBy">Sorted by</sys:String>
     <sys:String x:Key="SortRecent">Recently used</sys:String>
 
+    <!-- Add Entry dialog -->
+    <sys:String x:Key="FieldTitle">TITLE</sys:String>
+    <sys:String x:Key="FieldCategory">CATEGORY</sys:String>
+    <sys:String x:Key="BtnCancel">Cancel</sys:String>
+    <sys:String x:Key="BtnSaveEntry">Save Entry</sys:String>
+
     <!-- Detail panel -->
     <sys:String x:Key="FieldUsername">USERNAME</sys:String>
     <sys:String x:Key="FieldPassword">PASSWORD</sys:String>

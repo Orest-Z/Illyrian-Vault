@@ -58,6 +58,12 @@
     <sys:String x:Key="SortedBy">Renditur sipas</sys:String>
     <sys:String x:Key="SortRecent">Të përdorura së fundmi</sys:String>
 
+    <!-- Add Entry dialog -->
+    <sys:String x:Key="FieldTitle">TITULLI</sys:String>
+    <sys:String x:Key="FieldCategory">KATEGORIA</sys:String>
+    <sys:String x:Key="BtnCancel">Anulo</sys:String>
+    <sys:String x:Key="BtnSaveEntry">Ruaj Hyrjen</sys:String>
+
     <sys:String x:Key="FieldUsername">PËRDORUESI</sys:String>
     <sys:String x:Key="FieldPassword">FJALËKALIMI</sys:String>
     <sys:String x:Key="FieldWebsite">WEBSAJTI</sys:String>

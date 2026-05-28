@@ -1,0 +1,159 @@
+<Window x:Class="IllyriaVault.Views.AddEntryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:helpers="clr-namespace:IllyriaVault.Helpers"
+        xmlns:conv="clr-namespace:IllyriaVault.Converters"
+        Title="New Entry"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Width="520" Height="620">
+
+    <Window.Resources>
+        <conv:EqualityConverter x:Key="EqConv"/>
+    </Window.Resources>
+
+    <!-- Outer shadow border — same pattern as main window -->
+    <Border Margin="16"
+            Background="{DynamicResource BrushWindow}"
+            BorderBrush="{DynamicResource BrushStrokeSubtle}"
+            BorderThickness="1"
+            CornerRadius="12">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="24" ShadowDepth="10"
+                              Opacity="0.5" Direction="270"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="52"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="64"/>
+            </Grid.RowDefinitions>
+
+            <!-- ── Title bar ─────────────────────────────────────────── -->
+            <Border Grid.Row="0"
+                    BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                    BorderThickness="0,0,0,1"
+                    Background="Transparent"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Margin="20,0,4,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="28" Height="28" CornerRadius="8"
+                                Background="{DynamicResource BrushAccentSoft}">
+                            <iconPacks:PackIconMaterial Kind="Plus"
+                                                        Width="14" Height="14"
+                                                        Foreground="{DynamicResource BrushAccent}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="New Entry"
+                                   Foreground="{DynamicResource BrushText}"
+                                   FontFamily="{StaticResource FontPrimary}"
+                                   FontSize="{StaticResource FontBody}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <Button HorizontalAlignment="Right"
+                            Style="{StaticResource BtnClose}"
+                            Command="{Binding CancelCommand}">
+                        <iconPacks:PackIconMaterial Kind="Close" Width="12" Height="12"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ── Form fields ───────────────────────────────────────── -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="24,20,24,0">
+                <StackPanel>
+
+                    <!-- Title (required) -->
+                    <TextBlock Text="{DynamicResource FieldTitle}"
+                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                    <TextBox Style="{StaticResource InputBox}"
+                             Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- Category -->
+                    <TextBlock Text="{DynamicResource FieldCategory}"
+                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource BrushElevated}"
+                            BorderBrush="{DynamicResource BrushStroke}"
+                            BorderThickness="1" CornerRadius="8"
+                            Padding="2" Height="34" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource SegButton}" Content="Login"    GroupName="CatSel"
+                                         IsChecked="{Binding SelectedCategory, Converter={StaticResource EqConv}, ConverterParameter=Login}"/>
+                            <RadioButton Style="{StaticResource SegButton}" Content="Note"     GroupName="CatSel"
+                                         IsChecked="{Binding SelectedCategory, Converter={StaticResource EqConv}, ConverterParameter=Note}"/>
+                            <RadioButton Style="{StaticResource SegButton}" Content="Card"     GroupName="CatSel"
+                                         IsChecked="{Binding SelectedCategory, Converter={StaticResource EqConv}, ConverterParameter=Card}"/>
+                            <RadioButton Style="{StaticResource SegButton}" Content="Identity" GroupName="CatSel"
+                                         IsChecked="{Binding SelectedCategory, Converter={StaticResource EqConv}, ConverterParameter=Identity}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Username -->
+                    <TextBlock Text="{DynamicResource FieldUsername}"
+                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                    <TextBox Style="{StaticResource InputBox}"
+                             Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- Password -->
+                    <TextBlock Text="{DynamicResource FieldPassword}"
+                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                    <PasswordBox Style="{StaticResource PasswordInput}"
+                                 helpers:PasswordBoxHelper.BindPassword="True"
+                                 helpers:PasswordBoxHelper.BoundPassword="{Binding Password, Mode=TwoWay}"
+                                 Margin="0,0,0,16"/>
+
+                    <!-- Website -->
+                    <TextBlock Text="{DynamicResource FieldWebsite}"
+                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                    <TextBox Style="{StaticResource InputBox}"
+                             Text="{Binding Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- Notes -->
+                    <TextBlock Text="{DynamicResource FieldNotes}"
+                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                    <TextBox Style="{StaticResource InputBox}"
+                             Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Height="64"
+                             VerticalContentAlignment="Top"
+                             VerticalScrollBarVisibility="Auto"
+                             Margin="0,0,0,8"/>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ── Footer: Cancel + Save ──────────────────────────────── -->
+            <Border Grid.Row="2"
+                    BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                    BorderThickness="0,1,0,0"
+                    Padding="24,0">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <Button Style="{StaticResource BtnSecondary}"
+                            Content="{DynamicResource BtnCancel}"
+                            Width="90" Margin="0,0,10,0"
+                            Command="{Binding CancelCommand}"/>
+                    <Button Style="{StaticResource BtnPrimary}"
+                            Content="{DynamicResource BtnSaveEntry}"
+                            Width="110"
+                            Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -7,7 +7,7 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
-        ResizeMode="CanResizeWithGrip"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Width="1320" Height="800"
         MinWidth="900" MinHeight="600">
@@ -83,7 +83,7 @@
     </Window.Resources>
 
     <!-- Outer border: rounded corners + drop shadow (Win10 compatible) -->
-    <Border Margin="20"
+    <Border x:Name="OuterBorder" Margin="20"
             Background="{DynamicResource BrushWindowGrad}"
             BorderBrush="{DynamicResource BrushStrokeSubtle}"
             BorderThickness="1"
@@ -170,7 +170,7 @@
                             <iconPacks:PackIconMaterial Kind="Minus" Width="12" Height="12"/>
                         </Button>
                         <Button Style="{StaticResource BtnWinControl}" Click="MaximizeClick">
-                            <iconPacks:PackIconMaterial Kind="FullscreenExit" Width="11" Height="11"/>
+                            <iconPacks:PackIconMaterial x:Name="MaximizeIcon" Kind="Fullscreen" Width="11" Height="11"/>
                         </Button>
                         <Button Style="{StaticResource BtnClose}" Click="CloseClick">
                             <iconPacks:PackIconMaterial Kind="Close" Width="13" Height="13"/>
@@ -457,6 +457,7 @@
                         <Button Grid.Column="1"
                                 Style="{StaticResource BtnPrimary}"
                                 Content="{DynamicResource NewEntry}"
+                                Command="{Binding RequestNewEntryCommand}"
                                 Padding="12,0"/>
                     </Grid>
 
