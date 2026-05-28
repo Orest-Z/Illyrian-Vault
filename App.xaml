@@ -15,6 +15,8 @@
                 <ResourceDictionary Source="Resources/Localization/Strings.en.xaml"/>
                 <!-- 3. Global styles — references the brushes above via DynamicResource -->
                 <ResourceDictionary Source="Resources/Styles/GlobalStyles.xaml"/>
+                <!-- 4. Payload data templates + selectors for polymorphic entry types -->
+                <ResourceDictionary Source="Resources/Templates/PayloadTemplates.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

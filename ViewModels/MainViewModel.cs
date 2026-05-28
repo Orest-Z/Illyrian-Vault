@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IllyriaVault.Models;
@@ -63,15 +64,14 @@ public partial class EntryViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanCheckBreach))]
     private async Task CheckBreachAsync()
     {
-        if (string.IsNullOrEmpty(Model.EncryptedPassword)) return;
+        if (CurrentPayload is not LoginPayload lp || string.IsNullOrEmpty(lp.Password)) return;
 
-        var plaintext = _crypto.Decrypt(Model.EncryptedPassword, _key);
         BreachStatus  = BreachStatus.Checking;
         BreachMessage = string.Empty;
 
         try
         {
-            var result    = await BreachCheckService.CheckPasswordAsync(plaintext);
+            var result    = await BreachCheckService.CheckPasswordAsync(lp.Password);
             BreachStatus  = result.IsNetworkUnavailable ? BreachStatus.Error
                           : result.IsBreached           ? BreachStatus.Breached
                           :                               BreachStatus.Safe;
@@ -94,42 +94,55 @@ public partial class EntryViewModel : ObservableObject
 
     public bool IsNotEditing => !IsEditing;
 
-    [ObservableProperty] private string _editTitle    = string.Empty;
-    [ObservableProperty] private string _editUsername = string.Empty;
-    [ObservableProperty] private string _editPassword = string.Empty;
-    [ObservableProperty] private string _editUrl      = string.Empty;
-    [ObservableProperty] private string _editNotes    = string.Empty;
+    [ObservableProperty] private string _editTitle = string.Empty;
+
+    // JSON snapshot of CurrentPayload captured on Edit() — used to revert on Cancel.
+    private string _payloadCache = string.Empty;
+
+    // ── Payload ────────────────────────────────────────────────────────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayPassword))]
+    [NotifyPropertyChangedFor(nameof(DisplayUsername))]
+    private IEntryPayload _currentPayload = new LoginPayload();
 
     [RelayCommand]
     private void Edit()
     {
         EditTitle    = Model.Title;
-        EditUsername = Model.Username;
-        EditPassword = string.IsNullOrEmpty(Model.EncryptedPassword)
-            ? string.Empty
-            : _crypto.Decrypt(Model.EncryptedPassword, _key);
-        EditUrl      = Model.Url;
-        EditNotes    = Model.Notes;
+        _payloadCache = JsonSerializer.Serialize(CurrentPayload, CurrentPayload.GetType());
         IsEditing    = true;
     }
 
     [RelayCommand]
     private async Task SaveAsync()
     {
-        var oldEncrypted = Model.EncryptedPassword;
-        var newEncrypted = string.IsNullOrWhiteSpace(EditPassword)
-            ? string.Empty
-            : _crypto.Encrypt(EditPassword, _key);
+        // Archive old password and sync flat fields for Login entries.
+        if (CurrentPayload is LoginPayload lp)
+        {
+            var newEncrypted = string.IsNullOrEmpty(lp.Password)
+                ? string.Empty
+                : _crypto.Encrypt(lp.Password, _key);
 
-        // Archive the old password if it changed and there was one.
-        if (!string.IsNullOrEmpty(oldEncrypted) && oldEncrypted != newEncrypted)
-            await _db.InsertPasswordHistoryAsync(Model.Id, oldEncrypted);
+            if (!string.IsNullOrEmpty(Model.EncryptedPassword) && Model.EncryptedPassword != newEncrypted)
+                await _db.InsertPasswordHistoryAsync(Model.Id, Model.EncryptedPassword);
 
-        Model.Title             = EditTitle;
-        Model.Username          = EditUsername;
-        Model.EncryptedPassword = newEncrypted;
-        Model.Url               = EditUrl;
-        Model.Notes             = EditNotes;
+            Model.EncryptedPassword = newEncrypted;
+            Model.Username          = lp.Username;
+            Model.Url               = lp.Url;
+            Model.Notes             = lp.Notes;
+        }
+        else
+        {
+            Model.EncryptedPassword = string.Empty;
+            Model.Username          = string.Empty;
+            Model.Url               = string.Empty;
+            Model.Notes             = string.Empty;
+        }
+
+        Model.Title          = EditTitle;
+        var json             = JsonSerializer.Serialize(CurrentPayload, CurrentPayload.GetType());
+        Model.EncryptedPayload = _crypto.Encrypt(json, _key);
 
         await _db.UpdateEntryAsync(Model);
 
@@ -143,7 +156,13 @@ public partial class EntryViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CancelEdit() => IsEditing = false;
+    private void CancelEdit()
+    {
+        if (!string.IsNullOrEmpty(_payloadCache))
+            CurrentPayload = DeserializePayload(_payloadCache, Model.Category);
+        EditTitle = Model.Title;
+        IsEditing = false;
+    }
 
     // ── Password history ───────────────────────────────────────────────────────
 
@@ -187,23 +206,73 @@ public partial class EntryViewModel : ObservableObject
             : (System.Windows.Application.Current.TryFindResource("BrushTextSecondary") as System.Windows.Media.Brush)
               ?? System.Windows.Media.Brushes.Gray;
 
-    public string DisplayTitle    => Model.Title;
-    public string DisplayUsername => Model.Username;
+    public string DisplayTitle => Model.Title;
+
+    public string DisplayUsername => CurrentPayload switch
+    {
+        LoginPayload    lp => lp.Username,
+        CardPayload     cp => cp.CardholderName,
+        IdentityPayload ip => ip.FullName,
+        _                  => string.Empty,
+    };
+
     public string TileInitial      => string.IsNullOrEmpty(Model.Title) ? "?" : Model.Title[0].ToString().ToUpperInvariant();
     public string UpdatedFormatted => Model.UpdatedAt.ToString("MMM dd, yyyy");
 
-    public string DisplayPassword =>
-        IsPasswordRevealed && !string.IsNullOrEmpty(Model.EncryptedPassword)
-            ? _crypto.Decrypt(Model.EncryptedPassword, _key)
-            : "••••••••••••••••";
+    public string DisplayPassword
+    {
+        get
+        {
+            if (CurrentPayload is not LoginPayload lp || string.IsNullOrEmpty(lp.Password))
+                return string.Empty;
+            return IsPasswordRevealed ? lp.Password : "••••••••••••••••";
+        }
+    }
+
+    // ── Payload helpers ────────────────────────────────────────────────────────
+
+    private IEntryPayload LoadPayload()
+    {
+        if (!string.IsNullOrEmpty(Model.EncryptedPayload))
+        {
+            var json = _crypto.Decrypt(Model.EncryptedPayload, _key);
+            return DeserializePayload(json, Model.Category);
+        }
+        // Lazy migration: build payload from legacy flat columns.
+        return Model.Category switch
+        {
+            "Note"     => new NotePayload(),
+            "Card"     => new CardPayload(),
+            "Identity" => new IdentityPayload(),
+            _          => new LoginPayload
+            {
+                Username = Model.Username,
+                Password = string.IsNullOrEmpty(Model.EncryptedPassword)
+                    ? string.Empty
+                    : _crypto.Decrypt(Model.EncryptedPassword, _key),
+                Url  = Model.Url,
+                Notes = Model.Notes,
+            },
+        };
+    }
+
+    private static IEntryPayload DeserializePayload(string json, string category) =>
+        category switch
+        {
+            "Note"     => JsonSerializer.Deserialize<NotePayload>(json)     ?? new NotePayload(),
+            "Card"     => JsonSerializer.Deserialize<CardPayload>(json)     ?? new CardPayload(),
+            "Identity" => JsonSerializer.Deserialize<IdentityPayload>(json) ?? new IdentityPayload(),
+            _          => JsonSerializer.Deserialize<LoginPayload>(json)    ?? new LoginPayload(),
+        };
 
     public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key, DatabaseService db)
     {
-        Model       = model;
-        _crypto     = crypto;
-        _key        = key;
-        _db         = db;
-        _isFavorite = model.IsFavorite;
+        Model          = model;
+        _crypto        = crypto;
+        _key           = key;
+        _db            = db;
+        _isFavorite    = model.IsFavorite;
+        _currentPayload = LoadPayload();
     }
 }
 
@@ -344,15 +413,23 @@ public partial class MainViewModel : BaseViewModel
     private void CopyUsername()
     {
         if (SelectedEntry is null) return;
-        System.Windows.Clipboard.SetText(SelectedEntry.Model.Username);
+        var text = SelectedEntry.CurrentPayload switch
+        {
+            LoginPayload    lp => lp.Username,
+            CardPayload     cp => cp.CardholderName,
+            IdentityPayload ip => ip.FullName,
+            _                  => string.Empty,
+        };
+        if (!string.IsNullOrEmpty(text))
+            System.Windows.Clipboard.SetText(text);
     }
 
     [RelayCommand]
     private void CopyPassword()
     {
-        if (SelectedEntry is null || string.IsNullOrEmpty(SelectedEntry.Model.EncryptedPassword)) return;
-        var plaintext = _crypto.Decrypt(SelectedEntry.Model.EncryptedPassword, _sessionKey);
-        System.Windows.Clipboard.SetText(plaintext);
+        if (SelectedEntry?.CurrentPayload is not LoginPayload lp) return;
+        if (!string.IsNullOrEmpty(lp.Password))
+            System.Windows.Clipboard.SetText(lp.Password);
     }
 
     [RelayCommand]
@@ -409,8 +486,8 @@ public partial class MainViewModel : BaseViewModel
         {
             var f = SearchQuery.Trim();
             q = q.Where(e =>
-                e.Model.Title.Contains(f, StringComparison.OrdinalIgnoreCase)    ||
-                e.Model.Username.Contains(f, StringComparison.OrdinalIgnoreCase) ||
+                e.Model.Title.Contains(f, StringComparison.OrdinalIgnoreCase)        ||
+                e.DisplayUsername.Contains(f, StringComparison.OrdinalIgnoreCase)    ||
                 e.Model.Url.Contains(f, StringComparison.OrdinalIgnoreCase));
         }
 

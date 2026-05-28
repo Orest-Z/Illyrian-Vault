@@ -136,7 +136,8 @@ public sealed class DatabaseService : IAsyncDisposable
                 Category          TEXT    NOT NULL DEFAULT 'Login',
                 IsFavorite        INTEGER NOT NULL DEFAULT 0,
                 CreatedAt         TEXT    NOT NULL,
-                UpdatedAt         TEXT    NOT NULL
+                UpdatedAt         TEXT    NOT NULL,
+                EncryptedPayload  TEXT    NOT NULL DEFAULT ''
             );
             """);
 
@@ -153,6 +154,8 @@ public sealed class DatabaseService : IAsyncDisposable
         try { await ExecAsync("ALTER TABLE Users ADD COLUMN Username TEXT NOT NULL DEFAULT '';"); }
         catch (Microsoft.Data.Sqlite.SqliteException) { }
         try { await ExecAsync("ALTER TABLE PasswordEntries ADD COLUMN UserId INTEGER NOT NULL DEFAULT 1;"); }
+        catch (Microsoft.Data.Sqlite.SqliteException) { }
+        try { await ExecAsync("ALTER TABLE PasswordEntries ADD COLUMN EncryptedPayload TEXT NOT NULL DEFAULT '';"); }
         catch (Microsoft.Data.Sqlite.SqliteException) { }
     }
 
@@ -206,8 +209,8 @@ public sealed class DatabaseService : IAsyncDisposable
         e.CreatedAt = e.UpdatedAt = DateTime.UtcNow;
         await ExecAsync("""
             INSERT INTO PasswordEntries
-                (UserId, Title, Username, EncryptedPassword, Url, Notes, Category, IsFavorite, CreatedAt, UpdatedAt)
-            VALUES (@Uid, @Title, @User, @Pw, @Url, @Notes, @Cat, @Fav, @Created, @Updated);
+                (UserId, Title, Username, EncryptedPassword, Url, Notes, Category, IsFavorite, CreatedAt, UpdatedAt, EncryptedPayload)
+            VALUES (@Uid, @Title, @User, @Pw, @Url, @Notes, @Cat, @Fav, @Created, @Updated, @Payload);
             """,
             P("@Uid",     e.UserId),
             P("@Title",   e.Title),
@@ -218,7 +221,8 @@ public sealed class DatabaseService : IAsyncDisposable
             P("@Cat",     e.Category),
             P("@Fav",     e.IsFavorite ? 1 : 0),
             P("@Created", Iso(e.CreatedAt)),
-            P("@Updated", Iso(e.UpdatedAt)));
+            P("@Updated", Iso(e.UpdatedAt)),
+            P("@Payload", e.EncryptedPayload));
 
         await using var lastId = Cmd("SELECT last_insert_rowid();");
         return (long)(await lastId.ExecuteScalarAsync() ?? 0L);
@@ -231,7 +235,7 @@ public sealed class DatabaseService : IAsyncDisposable
             UPDATE PasswordEntries SET
                 Title = @Title, Username = @User, EncryptedPassword = @Pw,
                 Url = @Url, Notes = @Notes, Category = @Cat,
-                IsFavorite = @Fav, UpdatedAt = @Updated
+                IsFavorite = @Fav, UpdatedAt = @Updated, EncryptedPayload = @Payload
             WHERE Id = @Id;
             """,
             P("@Id",      e.Id),
@@ -242,7 +246,8 @@ public sealed class DatabaseService : IAsyncDisposable
             P("@Notes",   e.Notes),
             P("@Cat",     e.Category),
             P("@Fav",     e.IsFavorite ? 1 : 0),
-            P("@Updated", Iso(e.UpdatedAt)));
+            P("@Updated", Iso(e.UpdatedAt)),
+            P("@Payload", e.EncryptedPayload));
     }
 
     public async Task DeleteEntryAsync(long id) =>
@@ -320,5 +325,6 @@ public sealed class DatabaseService : IAsyncDisposable
         IsFavorite        = r.GetInt32(r.GetOrdinal("IsFavorite")) == 1,
         CreatedAt         = DateTime.Parse(r.GetString(r.GetOrdinal("CreatedAt"))),
         UpdatedAt         = DateTime.Parse(r.GetString(r.GetOrdinal("UpdatedAt"))),
+        EncryptedPayload  = r.GetString(r.GetOrdinal("EncryptedPayload")),
     };
 }

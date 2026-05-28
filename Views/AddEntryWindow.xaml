@@ -130,21 +130,13 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Username -->
-                    <TextBlock Text="{DynamicResource FieldUsername}"
-                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
-                    <TextBox Style="{StaticResource InputBox}"
-                             Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,16"/>
+                    <!-- Payload fields — routed by category via DataTemplateSelector -->
+                    <ContentControl Content="{Binding CurrentPayload}"
+                                    ContentTemplateSelector="{StaticResource PayloadEditSelector}"
+                                    Margin="0,0,0,16"/>
 
-                    <!-- Password -->
-                    <TextBlock Text="{DynamicResource FieldPassword}"
-                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
-                    <PasswordBox Style="{StaticResource PasswordInput}"
-                                 helpers:PasswordBoxHelper.BindPassword="True"
-                                 helpers:PasswordBoxHelper.BoundPassword="{Binding Password, Mode=TwoWay}"
-                                 Margin="0,0,0,8"/>
-                    <!-- ── Password Generator accordion ── -->
+                    <!-- ── Password Generator accordion (Login only) ── -->
+                    <Grid Visibility="{Binding IsLoginCategory, Converter={StaticResource BoolToVis}}">
                     <Border Background="{DynamicResource BrushElevated}"
                             BorderBrush="{DynamicResource BrushStroke}"
                             BorderThickness="1" CornerRadius="8"
@@ -336,25 +328,7 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-
-                    <!-- Website -->
-                    <TextBlock Text="{DynamicResource FieldWebsite}"
-                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
-                    <TextBox Style="{StaticResource InputBox}"
-                             Text="{Binding Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,16"/>
-
-                    <!-- Notes -->
-                    <TextBlock Text="{DynamicResource FieldNotes}"
-                               Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
-                    <TextBox Style="{StaticResource InputBox}"
-                             Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             TextWrapping="Wrap"
-                             AcceptsReturn="True"
-                             Height="64"
-                             VerticalContentAlignment="Top"
-                             VerticalScrollBarVisibility="Auto"
-                             Margin="0,0,0,8"/>
+                    </Grid>
 
                 </StackPanel>
             </ScrollViewer>

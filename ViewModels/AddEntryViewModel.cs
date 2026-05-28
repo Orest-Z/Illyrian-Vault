@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IllyriaVault.Models;
@@ -17,11 +18,25 @@ public partial class AddEntryViewModel : BaseViewModel
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
     private string _title = string.Empty;
 
-    [ObservableProperty] private string _username         = string.Empty;
-    [ObservableProperty] private string _password         = string.Empty;
-    [ObservableProperty] private string _url              = string.Empty;
-    [ObservableProperty] private string _notes            = string.Empty;
-    [ObservableProperty] private string _selectedCategory = "Login";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLoginCategory))]
+    private string _selectedCategory = "Login";
+
+    [ObservableProperty]
+    private IEntryPayload _currentPayload = new LoginPayload();
+
+    public bool IsLoginCategory => SelectedCategory == "Login";
+
+    partial void OnSelectedCategoryChanged(string value)
+    {
+        CurrentPayload = value switch
+        {
+            "Note"     => new NotePayload(),
+            "Card"     => new CardPayload(),
+            "Identity" => new IdentityPayload(),
+            _          => new LoginPayload(),
+        };
+    }
 
     public PasswordGeneratorViewModel Generator { get; }
 
@@ -30,7 +45,7 @@ public partial class AddEntryViewModel : BaseViewModel
         _crypto     = crypto;
         _sessionKey = sessionKey;
         Generator   = new PasswordGeneratorViewModel();
-        Generator.PasswordAccepted += p => Password = p;
+        Generator.PasswordAccepted += p => { if (CurrentPayload is LoginPayload lp) lp.Password = p; };
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
@@ -41,16 +56,37 @@ public partial class AddEntryViewModel : BaseViewModel
     [RelayCommand]
     private void Cancel() => CancelRequested?.Invoke();
 
-    public PasswordEntry BuildEntry() => new()
+    public PasswordEntry BuildEntry()
     {
-        UserId            = 1,
-        Title             = Title.Trim(),
-        Username          = Username.Trim(),
-        EncryptedPassword = string.IsNullOrEmpty(Password)
-            ? string.Empty
-            : _crypto.Encrypt(Password, _sessionKey),
-        Url               = Url.Trim(),
-        Notes             = Notes.Trim(),
-        Category          = SelectedCategory,
-    };
+        var json             = JsonSerializer.Serialize(CurrentPayload, CurrentPayload.GetType());
+        var encryptedPayload = _crypto.Encrypt(json, _sessionKey);
+
+        // Keep flat fields in sync for Login (legacy compat + search).
+        string username          = string.Empty;
+        string encryptedPassword = string.Empty;
+        string url               = string.Empty;
+        string notes             = string.Empty;
+
+        if (CurrentPayload is LoginPayload lp)
+        {
+            username          = lp.Username;
+            encryptedPassword = string.IsNullOrEmpty(lp.Password)
+                ? string.Empty
+                : _crypto.Encrypt(lp.Password, _sessionKey);
+            url   = lp.Url;
+            notes = lp.Notes;
+        }
+
+        return new()
+        {
+            UserId            = 1,
+            Title             = Title.Trim(),
+            Username          = username,
+            EncryptedPassword = encryptedPassword,
+            Url               = url,
+            Notes             = notes,
+            Category          = SelectedCategory,
+            EncryptedPayload  = encryptedPayload,
+        };
+    }
 }
