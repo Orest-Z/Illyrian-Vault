@@ -1,9 +1,9 @@
-using System.IO;
+﻿using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using IllyriaVault.Services;
+using IllyrianVault.Services;
 
-namespace IllyriaVault.ViewModels;
+namespace IllyrianVault.ViewModels;
 
 public partial class LoginViewModel : BaseViewModel
 {
@@ -106,4 +106,7 @@ public partial class LoginViewModel : BaseViewModel
 
     [RelayCommand]
     private void NavigateRegister() => NavigateToRegister?.Invoke();
+
+    [RelayCommand]
+    private void Exit() => System.Windows.Application.Current.Shutdown();
 }

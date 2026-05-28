@@ -1,7 +1,7 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace IllyriaVault.Helpers;
+namespace IllyrianVault.Helpers;
 
 /// <summary>
 /// Attached property that enables two-way MVVM data binding on PasswordBox.

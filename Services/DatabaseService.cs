@@ -1,8 +1,8 @@
-using System.IO;
-using IllyriaVault.Models;
+﻿using System.IO;
+using IllyrianVault.Models;
 using Microsoft.Data.Sqlite;
 
-namespace IllyriaVault.Services;
+namespace IllyrianVault.Services;
 
 /// <summary>
 /// All database I/O using SQLite + SQLCipher AES-256.
@@ -11,7 +11,7 @@ namespace IllyriaVault.Services;
 ///   All CRUD    ≈ PreparedStatement + ResultSet mapping
 ///
 /// Each user gets an isolated vault at:
-///   %LOCALAPPDATA%\IllyriaVault\Profiles\{username}\vault.db
+///   %LOCALAPPDATA%\IllyrianVault\Profiles\{username}\vault.db
 /// </summary>
 public sealed class DatabaseService : IAsyncDisposable
 {
@@ -273,15 +273,15 @@ public sealed class DatabaseService : IAsyncDisposable
             P("@Created", Iso(DateTime.UtcNow)));
     }
 
-    public async Task<List<IllyriaVault.Models.PasswordHistory>> GetPasswordHistoryAsync(long entryId)
+    public async Task<List<IllyrianVault.Models.PasswordHistory>> GetPasswordHistoryAsync(long entryId)
     {
-        var list = new List<IllyriaVault.Models.PasswordHistory>();
+        var list = new List<IllyrianVault.Models.PasswordHistory>();
         await using var cmd = Cmd(
             "SELECT * FROM PasswordHistory WHERE EntryId = @Id ORDER BY CreatedAt DESC;",
             P("@Id", entryId));
         await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
-            list.Add(new IllyriaVault.Models.PasswordHistory
+            list.Add(new IllyrianVault.Models.PasswordHistory
             {
                 Id                = reader.GetInt64(reader.GetOrdinal("Id")),
                 EntryId           = reader.GetInt64(reader.GetOrdinal("EntryId")),

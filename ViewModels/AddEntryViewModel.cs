@@ -1,10 +1,10 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using IllyriaVault.Models;
-using IllyriaVault.Services;
+using IllyrianVault.Models;
+using IllyrianVault.Services;
 
-namespace IllyriaVault.ViewModels;
+namespace IllyrianVault.ViewModels;
 
 public partial class AddEntryViewModel : BaseViewModel
 {

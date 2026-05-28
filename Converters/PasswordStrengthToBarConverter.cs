@@ -1,9 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace IllyriaVault.Converters;
+namespace IllyrianVault.Converters;
 
 /// <summary>
 /// Converts a strength score (0–5) to a filled or unfilled bar brush.

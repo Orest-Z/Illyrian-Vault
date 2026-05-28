@@ -1,6 +1,6 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace IllyriaVault.Models;
+namespace IllyrianVault.Models;
 
 public partial class NotePayload : ObservableObject, IEntryPayload
 {

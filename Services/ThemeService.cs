@@ -1,6 +1,6 @@
-using System.Windows;
+﻿using System.Windows;
 
-namespace IllyriaVault.Services;
+namespace IllyrianVault.Services;
 
 public enum AppTheme { Red, Dark, Light }
 

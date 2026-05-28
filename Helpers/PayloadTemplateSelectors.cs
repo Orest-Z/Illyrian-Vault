@@ -1,8 +1,8 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using IllyriaVault.Models;
+using IllyrianVault.Models;
 
-namespace IllyriaVault.Helpers;
+namespace IllyrianVault.Helpers;
 
 public class PayloadViewSelector : DataTemplateSelector
 {

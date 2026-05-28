@@ -1,11 +1,13 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
-using IllyriaVault.ViewModels;
+using System.Windows.Media.Animation;
+using IllyrianVault.Services;
+using IllyrianVault.ViewModels;
 using MahApps.Metro.IconPacks;
 
-namespace IllyriaVault.Views;
+namespace IllyrianVault.Views;
 
 public partial class MainWindow : Window
 {
@@ -69,7 +71,29 @@ public partial class MainWindow : Window
         _vm.LockRequested     += OnLockRequested;
         _vm.NewEntryRequested += OnNewEntryRequested;
 
-        Loaded += async (_, _) => await _vm.LoadEntriesCommand.ExecuteAsync(null);
+        Loaded += async (_, _) =>
+        {
+            StartWelcomeOverlay(username);
+            await _vm.LoadEntriesCommand.ExecuteAsync(null);
+        };
+    }
+
+    private void StartWelcomeOverlay(string username)
+    {
+        var welcomeKey = App.Localization.Current == AppLanguage.Sq ? "WelcomeBack" : "WelcomeBack";
+        var label = TryFindResource(welcomeKey) as string ?? "Welcome back";
+        WelcomeText.Text = $"{label}, {username}";
+
+        var anim = new DoubleAnimation
+        {
+            From        = 1.0,
+            To          = 0.0,
+            BeginTime   = TimeSpan.FromMilliseconds(800),
+            Duration    = new Duration(TimeSpan.FromMilliseconds(1200)),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+        };
+        anim.Completed += (_, _) => WelcomeOverlay.Visibility = Visibility.Collapsed;
+        WelcomeOverlay.BeginAnimation(OpacityProperty, anim);
     }
 
     // ── WndProc hook: resize + maximize rect ─────────────────────────────────────
@@ -78,9 +102,9 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         if (PresentationSource.FromVisual(this) is HwndSource src)
             src.AddHook(WndProc);
-        // MaxWidth/MaxHeight set in the constructor already constrain the initial
-        // maximize. The WndProc hook below handles correct ptMaxPosition and size
-        // for every subsequent maximize, including on secondary monitors.
+        // Defer maximize to here so the WndProc hook is installed before the first
+        // WM_GETMINMAXINFO fires — prevents the bottom-right drift bug.
+        WindowState = WindowState.Maximized;
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

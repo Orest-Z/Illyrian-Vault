@@ -1,9 +1,9 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace IllyriaVault.ViewModels;
+namespace IllyrianVault.ViewModels;
 
 public partial class PasswordGeneratorViewModel : ObservableObject
 {

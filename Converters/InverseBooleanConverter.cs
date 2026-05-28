@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Data;
 
-namespace IllyriaVault.Converters;
+namespace IllyrianVault.Converters;
 
 [ValueConversion(typeof(bool), typeof(bool))]
 public sealed class InverseBooleanConverter : IValueConverter

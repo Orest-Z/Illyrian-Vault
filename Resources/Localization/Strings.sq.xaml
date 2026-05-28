@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
-    <sys:String x:Key="AppName">Illyria Vault</sys:String>
+    <sys:String x:Key="AppName">Illyrian Vault</sys:String>
+    <sys:String x:Key="WelcomeBack">Mirë se erdhe</sys:String>
     <sys:String x:Key="AppTagline">Lokal dhe i Enkriptuar</sys:String>
     <sys:String x:Key="EncryptionLabel">I Enkriptuar · AES-256</sys:String>
     <sys:String x:Key="ProfileLocal">Profil lokal</sys:String>

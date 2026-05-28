@@ -1,8 +1,8 @@
-<UserControl x:Class="IllyriaVault.Views.LoginView"
+﻿<UserControl x:Class="IllyrianVault.Views.LoginView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-             xmlns:helpers="clr-namespace:IllyriaVault.Helpers">
+             xmlns:helpers="clr-namespace:IllyrianVault.Helpers">
 
     <!-- 2-column body: left hero + right form (matches HTML .login-body layout) -->
     <Grid>
@@ -196,6 +196,26 @@
             <Button Content="{DynamicResource CreateVault}"
                     Style="{StaticResource BtnSecondary}"
                     Command="{Binding NavigateRegisterCommand}"/>
+
+            <!-- Exit application -->
+            <Button Margin="0,10,0,0"
+                    Height="36"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    Command="{Binding ExitCommand}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <iconPacks:PackIconMaterial Kind="ExitToApp" Width="14" Height="14"
+                                               Foreground="{DynamicResource BrushTextSecondary}"
+                                               VerticalAlignment="Center"/>
+                    <TextBlock Text="Exit Application"
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               FontFamily="{StaticResource FontPrimary}"
+                               FontSize="{StaticResource FontBody}"
+                               VerticalAlignment="Center"
+                               Margin="8,0,0,0"/>
+                </StackPanel>
+            </Button>
         </StackPanel>
     </Grid>
 </UserControl>

@@ -1,4 +1,4 @@
-namespace IllyriaVault.Models;
+﻿namespace IllyrianVault.Models;
 
 public class PasswordHistory
 {

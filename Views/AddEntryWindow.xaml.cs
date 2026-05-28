@@ -1,8 +1,8 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
-using IllyriaVault.ViewModels;
+using IllyrianVault.ViewModels;
 
-namespace IllyriaVault.Views;
+namespace IllyrianVault.Views;
 
 public partial class AddEntryWindow : Window
 {

@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace IllyriaVault.Services;
+namespace IllyrianVault.Services;
 
 /// <summary>
 /// All cryptographic operations for Illyria Vault.

@@ -1,9 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using MahApps.Metro.IconPacks;
 
-namespace IllyriaVault.Converters;
+namespace IllyrianVault.Converters;
 
 // Converts bool (IsFavorite) → PackIconMaterialKind so one icon element handles both states.
 [ValueConversion(typeof(bool), typeof(PackIconMaterialKind))]

@@ -1,11 +1,11 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using IllyriaVault.Services;
-using IllyriaVault.ViewModels;
+using IllyrianVault.Services;
+using IllyrianVault.ViewModels;
 using MahApps.Metro.IconPacks;
 
-namespace IllyriaVault.Views;
+namespace IllyrianVault.Views;
 
 public partial class AuthWindow : Window, INotifyPropertyChanged
 {
@@ -61,7 +61,7 @@ public partial class AuthWindow : Window, INotifyPropertyChanged
         {
             MessageBox.Show(
                 ex.ToString(),
-                "Illyria Vault — Dashboard failed to open",
+                "Illyrian Vault — Dashboard failed to open",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }

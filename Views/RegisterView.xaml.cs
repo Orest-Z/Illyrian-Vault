@@ -1,6 +1,6 @@
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 
-namespace IllyriaVault.Views;
+namespace IllyrianVault.Views;
 
 public partial class RegisterView : UserControl
 {

@@ -1,9 +1,9 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace IllyriaVault.Services;
+namespace IllyrianVault.Services;
 
 public static class BreachCheckService
 {
@@ -30,7 +30,7 @@ public static class BreachCheckService
         string body;
         using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) })
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("IllyriaVault/1.0");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("IllyrianVault/1.0");
             body = await client.GetStringAsync(HibpRangeBase + prefix);
         }
 

@@ -1,6 +1,6 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace IllyriaVault.ViewModels;
+namespace IllyrianVault.ViewModels;
 
 // Java analogy: this is your abstract Presenter base class that implements
 // INotifyPropertyChanged via CommunityToolkit source generators.

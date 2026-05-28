@@ -1,6 +1,6 @@
-using System.Windows;
+﻿using System.Windows;
 
-namespace IllyriaVault.Services;
+namespace IllyrianVault.Services;
 
 public enum AppLanguage { En, Sq }
 

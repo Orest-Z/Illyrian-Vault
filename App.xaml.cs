@@ -1,7 +1,7 @@
-using System.Windows;
-using IllyriaVault.Services;
+﻿using System.Windows;
+using IllyrianVault.Services;
 
-namespace IllyriaVault;
+namespace IllyrianVault;
 
 public partial class App : Application
 {
@@ -28,7 +28,7 @@ public partial class App : Application
         {
             MessageBox.Show(
                 ex.Exception.Message,
-                "Illyria Vault — Unexpected Error",
+                "Illyrian Vault — Unexpected Error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             ex.Handled = true;

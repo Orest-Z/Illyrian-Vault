@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Data;
 
-namespace IllyriaVault.Converters;
+namespace IllyrianVault.Converters;
 
 // Compares a bound string value against ConverterParameter.
 // Used for RadioButton.IsChecked two-way binding in the sidebar nav and titlebar toggles.

@@ -1,11 +1,11 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using IllyriaVault.Models;
-using IllyriaVault.Services;
+using IllyrianVault.Models;
+using IllyrianVault.Services;
 
-namespace IllyriaVault.ViewModels;
+namespace IllyrianVault.ViewModels;
 
 public enum BreachStatus { NotChecked, Checking, Safe, Breached, Error }
 
@@ -90,9 +90,11 @@ public partial class EntryViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNotEditing))]
+    [NotifyPropertyChangedFor(nameof(IsEditingLogin))]
     private bool _isEditing;
 
-    public bool IsNotEditing => !IsEditing;
+    public bool IsNotEditing   => !IsEditing;
+    public bool IsEditingLogin => IsEditing && CurrentPayload is LoginPayload;
 
     [ObservableProperty] private string _editTitle = string.Empty;
 
@@ -104,7 +106,10 @@ public partial class EntryViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DisplayPassword))]
     [NotifyPropertyChangedFor(nameof(DisplayUsername))]
+    [NotifyPropertyChangedFor(nameof(IsEditingLogin))]
     private IEntryPayload _currentPayload = new LoginPayload();
+
+    public PasswordGeneratorViewModel Generator { get; } = new();
 
     [RelayCommand]
     private void Edit()
@@ -267,12 +272,13 @@ public partial class EntryViewModel : ObservableObject
 
     public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key, DatabaseService db)
     {
-        Model          = model;
-        _crypto        = crypto;
-        _key           = key;
-        _db            = db;
-        _isFavorite    = model.IsFavorite;
+        Model           = model;
+        _crypto         = crypto;
+        _key            = key;
+        _db             = db;
+        _isFavorite     = model.IsFavorite;
         _currentPayload = LoadPayload();
+        Generator.PasswordAccepted += p => { if (CurrentPayload is LoginPayload lp) lp.Password = p; };
     }
 }
 
