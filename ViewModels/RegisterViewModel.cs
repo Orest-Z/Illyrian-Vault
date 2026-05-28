@@ -112,15 +112,23 @@ public partial class RegisterViewModel : BaseViewModel
         ClearError();
         try
         {
+            if (DatabaseService.ProfileExists(Username))
+            {
+                ErrorMessage = "Username already exists on this device.";
+                return;
+            }
+
             var salt       = _crypto.GenerateSalt();
             var key        = _crypto.DeriveKey(NewPassword, salt);
             var hexKey     = Convert.ToHexString(key).ToLowerInvariant();
             var verifyHash = _crypto.CreateVerificationHash(key);
 
-            // Write unencrypted sidecar: salt, verification hash, and username.
-            // Login reads this to verify the password before opening the encrypted DB.
-            Directory.CreateDirectory(Path.GetDirectoryName(DatabaseService.MetaPath)!);
-            await File.WriteAllLinesAsync(DatabaseService.MetaPath, [
+            // Create the isolated profile folder and write the plaintext sidecar.
+            // Login reads the sidecar to verify the password before opening the encrypted DB.
+            var profileDir = DatabaseService.GetProfileDir(Username);
+            var metaPath   = DatabaseService.GetMetaPath(Username);
+            Directory.CreateDirectory(profileDir);
+            await File.WriteAllLinesAsync(metaPath, [
                 Convert.ToBase64String(salt),
                 Convert.ToBase64String(verifyHash),
                 Username,
@@ -137,6 +145,7 @@ public partial class RegisterViewModel : BaseViewModel
             };
 
             App.SessionKey = key;
+            _db.SetProfile(Username);
             await _db.OpenAsync(hexKey);
             await _db.SaveUserAsync(user);
 

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using IllyriaVault.Services;
 using IllyriaVault.ViewModels;
 using MahApps.Metro.IconPacks;
 
@@ -22,7 +23,10 @@ public partial class AuthWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         DataContext = this;
-        ShowLogin();
+        if (DatabaseService.AnyProfileExists())
+            ShowLogin();
+        else
+            ShowRegister();
     }
 
     private void ShowLogin()

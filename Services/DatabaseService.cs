@@ -10,38 +10,66 @@ namespace IllyriaVault.Services;
 ///   OpenAsync() ≈ DataSource.getConnection() with a JDBC URL
 ///   All CRUD    ≈ PreparedStatement + ResultSet mapping
 ///
-/// DB lives at: %LOCALAPPDATA%\IllyriaVault\vault.db
+/// Each user gets an isolated vault at:
+///   %LOCALAPPDATA%\IllyriaVault\Profiles\{username}\vault.db
 /// </summary>
 public sealed class DatabaseService : IAsyncDisposable
 {
-    private static readonly string DbDirectory =
+    // ── Static profile helpers ─────────────────────────────────────────────────
+
+    public static readonly string ProfilesRoot =
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "IllyriaVault");
+            "IllyriaVault", "Profiles");
 
-    public static readonly string DbPath = Path.Combine(DbDirectory, "vault.db");
+    public static string GetProfileDir(string username) =>
+        Path.Combine(ProfilesRoot, username);
 
-    // Sidecar file: stores salt + verification hash in plaintext so LoginViewModel
-    // can verify the password BEFORE opening the encrypted DB.
-    public static readonly string MetaPath = Path.ChangeExtension(DbPath, ".meta");
+    public static string GetDbPath(string username) =>
+        Path.Combine(GetProfileDir(username), "vault.db");
 
+    // Sidecar stores salt + verification hash so login can verify before opening the DB.
+    public static string GetMetaPath(string username) =>
+        Path.Combine(GetProfileDir(username), "vault.meta");
+
+    public static bool ProfileExists(string username) =>
+        !string.IsNullOrWhiteSpace(username) && Directory.Exists(GetProfileDir(username));
+
+    public static bool AnyProfileExists() =>
+        Directory.Exists(ProfilesRoot) && Directory.EnumerateDirectories(ProfilesRoot).Any();
+
+    public static List<string> ListProfiles() =>
+        Directory.Exists(ProfilesRoot)
+            ? Directory.GetDirectories(ProfilesRoot).Select(Path.GetFileName).Where(n => n is not null).Cast<string>().ToList()
+            : [];
+
+    // ── Instance state ─────────────────────────────────────────────────────────
+
+    private string            _dbPath = string.Empty;
     private SqliteConnection? _conn;
 
-    public bool VaultExists => File.Exists(DbPath) && File.Exists(MetaPath);
+    /// <summary>Must be called before OpenAsync/TryOpenAsync.</summary>
+    public void SetProfile(string username) =>
+        _dbPath = GetDbPath(username);
+
+    public bool VaultExists => !string.IsNullOrEmpty(_dbPath) && File.Exists(_dbPath);
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     public async Task OpenAsync(string hexKey)
     {
+        if (string.IsNullOrEmpty(_dbPath))
+            throw new InvalidOperationException("Call SetProfile(username) before opening the database.");
+
         // Close any existing connection before opening a new one.
         // Without this, a stale connection from a prior session holds the WAL writer lock
         // and the new connection's first query throws SqliteException ("file is not a database").
         await DisposeAsync();
 
-        Directory.CreateDirectory(DbDirectory);
+        Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
         SQLitePCL.Batteries_V2.Init();
 
-        _conn = new SqliteConnection($"Data Source={DbPath};Mode=ReadWriteCreate");
+        _conn = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate");
         await _conn.OpenAsync();
 
         // SQLCipher: key must be set as the very first command.

@@ -10,33 +10,36 @@ public partial class LoginViewModel : BaseViewModel
     private readonly EncryptionService _crypto;
     private readonly DatabaseService   _db;
 
-    // AuthWindow subscribes to these to navigate between screens.
-    // LoginSucceeded carries the username so MainWindow can display it.
     public event Action<string>? LoginSucceeded;
     public event Action?         NavigateToRegister;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ProfileInitial))]
+    [NotifyPropertyChangedFor(nameof(VaultPath))]
+    [NotifyCanExecuteChangedFor(nameof(UnlockCommand))]
     private string _username = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(UnlockCommand))]
     private string _masterPassword = string.Empty;
 
-    [ObservableProperty]
-    private string _vaultPath = DatabaseService.DbPath;
-
     public string ProfileInitial =>
         string.IsNullOrEmpty(Username) ? "?" : Username[0].ToString().ToUpperInvariant();
+
+    public string VaultPath => DatabaseService.GetDbPath(Username);
 
     public LoginViewModel(EncryptionService crypto, DatabaseService db)
     {
         _crypto = crypto;
         _db     = db;
+        TryAutoFillUsername();
+    }
 
-        // Pre-fill username from the vault.meta sidecar if the vault exists.
-        if (db.VaultExists)
-            _ = PreFillUsernameAsync();
+    private void TryAutoFillUsername()
+    {
+        var profiles = DatabaseService.ListProfiles();
+        if (profiles.Count == 1)
+            Username = profiles[0];
     }
 
     [RelayCommand(CanExecute = nameof(CanUnlock))]
@@ -46,23 +49,40 @@ public partial class LoginViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var meta = await ReadMetaAsync();
-            if (meta is null)
+            if (!DatabaseService.ProfileExists(Username))
             {
-                ErrorMessage = "Vault not found. Please create a new vault.";
+                ErrorMessage = "No vault found for that username.";
                 return;
             }
 
-            // Fast verification check before touching the encrypted DB.
-            if (!_crypto.VerifyPassword(MasterPassword, meta.Value.Salt, meta.Value.Hash))
+            var metaPath = DatabaseService.GetMetaPath(Username);
+            if (!File.Exists(metaPath))
+            {
+                ErrorMessage = "Vault data is missing or corrupted.";
+                return;
+            }
+
+            var lines = await File.ReadAllLinesAsync(metaPath);
+            if (lines.Length < 2)
+            {
+                ErrorMessage = "Vault data is missing or corrupted.";
+                return;
+            }
+
+            var salt = Convert.FromBase64String(lines[0]);
+            var hash = Convert.FromBase64String(lines[1]);
+
+            if (!_crypto.VerifyPassword(MasterPassword, salt, hash))
             {
                 ErrorMessage = "Incorrect master password. Please try again.";
                 return;
             }
 
-            var key    = _crypto.DeriveKey(MasterPassword, meta.Value.Salt);
+            var key    = _crypto.DeriveKey(MasterPassword, salt);
             App.SessionKey = key;
             var hexKey = Convert.ToHexString(key).ToLowerInvariant();
+
+            _db.SetProfile(Username);
             var opened = await _db.TryOpenAsync(hexKey);
             if (!opened)
             {
@@ -70,9 +90,8 @@ public partial class LoginViewModel : BaseViewModel
                 return;
             }
 
-            var username   = string.IsNullOrWhiteSpace(Username) ? meta.Value.Username : Username;
             MasterPassword = string.Empty;
-            LoginSucceeded?.Invoke(username);
+            LoginSucceeded?.Invoke(Username);
         }
         finally
         {
@@ -81,26 +100,10 @@ public partial class LoginViewModel : BaseViewModel
     }
 
     private bool CanUnlock() =>
+        !string.IsNullOrEmpty(Username) &&
         !string.IsNullOrEmpty(MasterPassword) &&
         !IsBusy;
 
     [RelayCommand]
     private void NavigateRegister() => NavigateToRegister?.Invoke();
-
-    private async Task PreFillUsernameAsync()
-    {
-        var meta = await ReadMetaAsync();
-        if (meta is not null && !string.IsNullOrEmpty(meta.Value.Username))
-            Username = meta.Value.Username;
-    }
-
-    // Reads the plaintext sidecar: line 0 = salt, line 1 = verification hash, line 2 = username.
-    private static async Task<(byte[] Salt, byte[] Hash, string Username)?> ReadMetaAsync()
-    {
-        if (!File.Exists(DatabaseService.MetaPath)) return null;
-        var lines = await File.ReadAllLinesAsync(DatabaseService.MetaPath);
-        if (lines.Length < 2) return null;
-        var username = lines.Length >= 3 ? lines[2] : string.Empty;
-        return (Convert.FromBase64String(lines[0]), Convert.FromBase64String(lines[1]), username);
-    }
 }
