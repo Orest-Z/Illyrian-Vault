@@ -31,6 +31,10 @@ public partial class PasswordGeneratorViewModel : ObservableObject
     [ObservableProperty] private bool _useSymbols    = false;
     [ObservableProperty] private bool _usePassphrase = false;
     [ObservableProperty] private int  _wordCount     = 4;
+    [ObservableProperty] private bool _isExpanded    = false;
+
+    [RelayCommand]
+    private void ToggleExpanded() => IsExpanded = !IsExpanded;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CopyToClipboardCommand))]

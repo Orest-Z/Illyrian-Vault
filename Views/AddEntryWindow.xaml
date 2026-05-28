@@ -14,7 +14,38 @@
         Width="520" Height="620">
 
     <Window.Resources>
-        <conv:EqualityConverter x:Key="EqConv"/>
+        <conv:EqualityConverter        x:Key="EqConv"/>
+        <conv:InverseBooleanConverter  x:Key="InvBool"/>
+
+        <!-- Flat clickable header for the generator accordion -->
+        <Style x:Key="BtnAccordion" TargetType="Button">
+            <Setter Property="Background"              Value="Transparent"/>
+            <Setter Property="BorderThickness"         Value="0"/>
+            <Setter Property="Cursor"                  Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="FocusVisualStyle"        Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Stretch"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background"
+                                        Value="{DynamicResource BrushHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background"
+                                        Value="{DynamicResource BrushSelected}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Outer shadow border — same pattern as main window -->
@@ -113,35 +144,197 @@
                                  helpers:PasswordBoxHelper.BindPassword="True"
                                  helpers:PasswordBoxHelper.BoundPassword="{Binding Password, Mode=TwoWay}"
                                  Margin="0,0,0,8"/>
-                    <!-- Generator quick-access -->
+                    <!-- ── Password Generator accordion ── -->
                     <Border Background="{DynamicResource BrushElevated}"
                             BorderBrush="{DynamicResource BrushStroke}"
                             BorderThickness="1" CornerRadius="8"
-                            Padding="12,8" Margin="0,0,0,16"
+                            Margin="0,0,0,16"
                             DataContext="{Binding Generator}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding GeneratedPassword}"
-                                       FontFamily="{StaticResource FontMono}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource BrushTextSecondary}"
-                                       VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis"/>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource BtnSecondary}"
-                                    Content="{DynamicResource GenGenerate}"
-                                    Command="{Binding GenerateCommand}"
-                                    Height="30" Padding="10,0" Margin="8,0,0,0"/>
-                            <Button Grid.Column="2"
-                                    Style="{StaticResource BtnPrimary}"
-                                    Content="{DynamicResource GenUsePassword}"
-                                    Command="{Binding UsePasswordCommand}"
-                                    Height="30" Padding="10,0" Margin="6,0,0,0"/>
-                        </Grid>
+                        <StackPanel>
+
+                            <!-- Header toggle row -->
+                            <Button Style="{StaticResource BtnAccordion}"
+                                    Command="{Binding ToggleExpandedCommand}"
+                                    Padding="12,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="KeyVariant"
+                                                                Width="14" Height="14"
+                                                                Foreground="{DynamicResource BrushAccent}"
+                                                                VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource NavGenerator}"
+                                               Foreground="{DynamicResource BrushText}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="{StaticResource FontBody}"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Margin="10,0,0,0"/>
+                                    <!-- Chevron rotates 180° when expanded -->
+                                    <iconPacks:PackIconMaterial Grid.Column="2"
+                                                                Kind="ChevronDown"
+                                                                Width="12" Height="12"
+                                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                                VerticalAlignment="Center"
+                                                                RenderTransformOrigin="0.5,0.5">
+                                        <iconPacks:PackIconMaterial.Style>
+                                            <Style TargetType="iconPacks:PackIconMaterial">
+                                                <Setter Property="RenderTransform">
+                                                    <Setter.Value><RotateTransform Angle="0"/></Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value><RotateTransform Angle="180"/></Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </iconPacks:PackIconMaterial.Style>
+                                    </iconPacks:PackIconMaterial>
+                                </Grid>
+                            </Button>
+
+                            <!-- Expandable body -->
+                            <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}"
+                                        Margin="12,0,12,12">
+
+                                <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}"
+                                        Margin="0,0,0,12"/>
+
+                                <!-- Length -->
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="{DynamicResource GenLength}"
+                                               Style="{StaticResource FieldLabel}"
+                                               VerticalAlignment="Center"/>
+                                    <Border HorizontalAlignment="Right"
+                                            Background="{DynamicResource BrushCard}"
+                                            BorderBrush="{DynamicResource BrushStroke}"
+                                            BorderThickness="1" CornerRadius="6"
+                                            Padding="10,3">
+                                        <TextBlock Text="{Binding Length}"
+                                                   Foreground="{DynamicResource BrushAccent}"
+                                                   FontFamily="{StaticResource FontMono}"
+                                                   FontSize="{StaticResource FontBody}"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                                <Slider Value="{Binding Length, Mode=TwoWay}"
+                                        Minimum="8" Maximum="128"
+                                        SmallChange="1" LargeChange="8"
+                                        IsSnapToTickEnabled="True" TickFrequency="1"
+                                        Margin="0,0,0,12"
+                                        IsEnabled="{Binding UsePassphrase, Converter={StaticResource InvBool}}"/>
+
+                                <!-- Character set -->
+                                <Border Background="{DynamicResource BrushCard}"
+                                        BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Padding="10,10" Margin="0,0,0,8"
+                                        IsEnabled="{Binding UsePassphrase, Converter={StaticResource InvBool}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource GenCharset}"
+                                                   Style="{StaticResource FieldLabel}"
+                                                   Margin="0,0,0,10"/>
+                                        <WrapPanel>
+                                            <CheckBox Style="{StaticResource VaultCheckBox}"
+                                                      Content="{DynamicResource GenUppercase}"
+                                                      IsChecked="{Binding UseUppercase, Mode=TwoWay}"
+                                                      Margin="0,0,14,6"/>
+                                            <CheckBox Style="{StaticResource VaultCheckBox}"
+                                                      Content="{DynamicResource GenLowercase}"
+                                                      IsChecked="{Binding UseLowercase, Mode=TwoWay}"
+                                                      Margin="0,0,14,6"/>
+                                            <CheckBox Style="{StaticResource VaultCheckBox}"
+                                                      Content="{DynamicResource GenNumbers}"
+                                                      IsChecked="{Binding UseNumbers, Mode=TwoWay}"
+                                                      Margin="0,0,14,6"/>
+                                            <CheckBox Style="{StaticResource VaultCheckBox}"
+                                                      Content="{DynamicResource GenSymbols}"
+                                                      IsChecked="{Binding UseSymbols, Mode=TwoWay}"
+                                                      Margin="0,0,0,6"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Passphrase mode -->
+                                <Border Background="{DynamicResource BrushCard}"
+                                        BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Padding="10,10" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <CheckBox Style="{StaticResource VaultCheckBox}"
+                                                  Content="{DynamicResource GenPassphrase}"
+                                                  IsChecked="{Binding UsePassphrase, Mode=TwoWay}"/>
+                                        <StackPanel Visibility="{Binding UsePassphrase, Converter={StaticResource BoolToVis}}"
+                                                    Margin="0,10,0,0">
+                                            <Grid Margin="0,0,0,6">
+                                                <TextBlock Text="{DynamicResource GenWordCount}"
+                                                           Style="{StaticResource FieldLabel}"
+                                                           VerticalAlignment="Center"/>
+                                                <Border HorizontalAlignment="Right"
+                                                        Background="{DynamicResource BrushElevated}"
+                                                        BorderBrush="{DynamicResource BrushStroke}"
+                                                        BorderThickness="1" CornerRadius="6"
+                                                        Padding="10,3">
+                                                    <TextBlock Text="{Binding WordCount}"
+                                                               Foreground="{DynamicResource BrushAccent}"
+                                                               FontFamily="{StaticResource FontMono}"
+                                                               FontSize="{StaticResource FontBody}"
+                                                               FontWeight="SemiBold"/>
+                                                </Border>
+                                            </Grid>
+                                            <Slider Value="{Binding WordCount, Mode=TwoWay}"
+                                                    Minimum="2" Maximum="10"
+                                                    SmallChange="1" LargeChange="1"
+                                                    IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Generate button -->
+                                <Button Style="{StaticResource BtnPrimary}"
+                                        Content="{DynamicResource GenGenerate}"
+                                        Command="{Binding GenerateCommand}"
+                                        Height="36"
+                                        Margin="0,0,0,8"/>
+
+                                <!-- Result row: generated password + Copy + Use -->
+                                <Border Background="{DynamicResource BrushCard}"
+                                        BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Padding="12,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding GeneratedPassword}"
+                                                   FontFamily="{StaticResource FontMono}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource BrushText}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Button Grid.Column="1"
+                                                Style="{StaticResource BtnSecondary}"
+                                                Content="{DynamicResource GenCopy}"
+                                                Command="{Binding CopyToClipboardCommand}"
+                                                Height="30" Padding="10,0" Margin="8,0,0,0"/>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnPrimary}"
+                                                Content="{DynamicResource GenUsePassword}"
+                                                Command="{Binding UsePasswordCommand}"
+                                                Height="30" Padding="10,0" Margin="6,0,0,0"/>
+                                    </Grid>
+                                </Border>
+
+                            </StackPanel>
+                        </StackPanel>
                     </Border>
 
                     <!-- Website -->

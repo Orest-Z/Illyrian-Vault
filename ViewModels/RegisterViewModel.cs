@@ -94,13 +94,25 @@ public partial class RegisterViewModel : BaseViewModel
         _ => true,
     };
 
-    [RelayCommand(CanExecute = nameof(CanGoBack))]
+    [RelayCommand]
     private void Back()
     {
-        if (CurrentStep > 1) CurrentStep--;
-    }
+        if (CurrentStep > 1)
+        {
+            CurrentStep--;
+            return;
+        }
 
-    private bool CanGoBack() => CurrentStep > 1;
+        // Step 1 → back means "cancel setup": wipe every partially typed field
+        // before handing control back to the Login screen.
+        Username        = string.Empty;
+        NewPassword     = string.Empty;
+        ConfirmPassword = string.Empty;
+        RecoveryKey     = string.Empty;
+        IsKeySaved      = false;
+        ClearError();
+        NavigateToLogin?.Invoke();
+    }
 
     [RelayCommand]
     private void Cancel() => NavigateToLogin?.Invoke();
