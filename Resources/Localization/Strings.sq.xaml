@@ -63,6 +63,7 @@
     <sys:String x:Key="FieldCategory">KATEGORIA</sys:String>
     <sys:String x:Key="BtnCancel">Anulo</sys:String>
     <sys:String x:Key="BtnSaveEntry">Ruaj Hyrjen</sys:String>
+    <sys:String x:Key="BtnLogOut">Dil</sys:String>
 
     <sys:String x:Key="FieldUsername">PËRDORUESI</sys:String>
     <sys:String x:Key="FieldPassword">FJALËKALIMI</sys:String>

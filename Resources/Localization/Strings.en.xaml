@@ -68,6 +68,7 @@
     <sys:String x:Key="FieldCategory">CATEGORY</sys:String>
     <sys:String x:Key="BtnCancel">Cancel</sys:String>
     <sys:String x:Key="BtnSaveEntry">Save Entry</sys:String>
+    <sys:String x:Key="BtnLogOut">Log Out</sys:String>
 
     <!-- Detail panel -->
     <sys:String x:Key="FieldUsername">USERNAME</sys:String>

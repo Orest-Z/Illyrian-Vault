@@ -225,6 +225,14 @@ public partial class MainViewModel : BaseViewModel
         LockRequested?.Invoke();
     }
 
+    [RelayCommand]
+    private async Task LogoutAsync()
+    {
+        App.SessionKey = [];
+        await App.Database.DisposeAsync();
+        LockRequested?.Invoke();
+    }
+
     // ── Filtering ──────────────────────────────────────────────────────────────
     private void ApplyFilter()
     {

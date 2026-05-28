@@ -2,12 +2,10 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using IllyriaVault.ViewModels;
+using MahApps.Metro.IconPacks;
 
 namespace IllyriaVault.Views;
 
-// AuthWindow owns a tiny "CurrentViewModel" property.
-// When it changes, the DataTemplates in AuthWindow.xaml automatically
-// swap in the right UserControl — no code-behind navigation needed.
 public partial class AuthWindow : Window, INotifyPropertyChanged
 {
     private object? _currentViewModel;
@@ -30,7 +28,7 @@ public partial class AuthWindow : Window, INotifyPropertyChanged
     private void ShowLogin()
     {
         var vm = new LoginViewModel(App.Encryption, App.Database);
-        vm.LoginSucceeded    += OnLoginSucceeded;
+        vm.LoginSucceeded     += OnLoginSucceeded;
         vm.NavigateToRegister += ShowRegister;
         CurrentViewModel = vm;
     }
@@ -65,10 +63,31 @@ public partial class AuthWindow : Window, INotifyPropertyChanged
         }
     }
 
-    // Allow dragging the window by clicking anywhere on it.
-    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+    // ── Title bar ─────────────────────────────────────────────────────────────
+    private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        base.OnMouseLeftButtonDown(e);
-        DragMove();
+        if (e.ClickCount == 2) { MaximizeClick(sender, e); return; }
+        if (WindowState == WindowState.Normal) DragMove();
+    }
+
+    private void MinimizeClick(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState.Minimized;
+
+    private void MaximizeClick(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+
+    private void CloseClick(object sender, RoutedEventArgs e) => Close();
+
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        bool maximized           = WindowState == WindowState.Maximized;
+        OuterBorder.Margin       = maximized ? new Thickness(0)   : new Thickness(20);
+        OuterBorder.CornerRadius = maximized ? new CornerRadius(0) : new CornerRadius(10);
+        MaximizeIcon.Kind        = maximized
+            ? PackIconMaterialKind.FullscreenExit
+            : PackIconMaterialKind.Fullscreen;
     }
 }

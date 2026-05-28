@@ -180,10 +180,11 @@
                        Margin="0,10,0,0"
                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
 
-            <!-- Unlock button -->
+            <!-- Unlock button — IsDefault makes Enter key trigger it from anywhere in the form -->
             <Button Content="{DynamicResource UnlockButton}"
                     Style="{StaticResource BtnPrimary}"
                     Command="{Binding UnlockCommand}"
+                    IsDefault="True"
                     Margin="0,28,0,0"/>
 
             <!-- Divider -->

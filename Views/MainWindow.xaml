@@ -378,43 +378,55 @@
                             CornerRadius="10"
                             Margin="12,8,12,12"
                             Padding="10">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <!-- Avatar -->
-                            <Border Width="30" Height="30" CornerRadius="15"
-                                    Background="{DynamicResource BrushAccent}">
-                                <TextBlock Text="{Binding ProfileInitial}"
-                                           Foreground="{DynamicResource BrushOnAccent}"
-                                           FontFamily="{StaticResource FontPrimary}"
-                                           FontSize="13" FontWeight="SemiBold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                                <!-- Avatar -->
+                                <Border Width="30" Height="30" CornerRadius="15"
+                                        Background="{DynamicResource BrushAccent}">
+                                    <TextBlock Text="{Binding ProfileInitial}"
+                                               Foreground="{DynamicResource BrushOnAccent}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
 
-                            <!-- Name + label -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
-                                <TextBlock Text="{Binding ProfileUsername}"
-                                           Foreground="{DynamicResource BrushText}"
-                                           FontFamily="{StaticResource FontPrimary}"
-                                           FontSize="13" FontWeight="SemiBold"/>
-                                <TextBlock Text="{DynamicResource ProfileLocal}"
-                                           Foreground="{DynamicResource BrushTextSecondary}"
-                                           FontFamily="{StaticResource FontPrimary}"
-                                           FontSize="12"
-                                           Margin="0,2,0,0"/>
-                            </StackPanel>
+                                <!-- Name + label -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding ProfileUsername}"
+                                               Foreground="{DynamicResource BrushText}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{DynamicResource ProfileLocal}"
+                                               Foreground="{DynamicResource BrushTextSecondary}"
+                                               FontFamily="{StaticResource FontPrimary}"
+                                               FontSize="12"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
 
-                            <!-- Lock button -->
-                            <Button Grid.Column="2" Style="{StaticResource BtnIconSmall}"
-                                    Command="{Binding LockCommand}"
-                                    ToolTip="Lock vault">
-                                <iconPacks:PackIconMaterial Kind="Lock" Width="14" Height="14"/>
-                            </Button>
-                        </Grid>
+                                <!-- Lock button -->
+                                <Button Grid.Column="2" Style="{StaticResource BtnIconSmall}"
+                                        Command="{Binding LockCommand}"
+                                        ToolTip="Lock vault">
+                                    <iconPacks:PackIconMaterial Kind="Lock" Width="14" Height="14"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- Divider + Log Out button -->
+                            <Border Height="1"
+                                    Background="{DynamicResource BrushStrokeSubtle}"
+                                    Margin="0,8,0,6"/>
+                            <Button Style="{StaticResource BtnSecondary}"
+                                    Content="{DynamicResource BtnLogOut}"
+                                    Command="{Binding LogoutCommand}"
+                                    Height="30"/>
+                        </StackPanel>
                     </Border>
                 </Grid>
 
