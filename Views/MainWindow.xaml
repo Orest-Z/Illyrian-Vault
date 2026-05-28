@@ -737,39 +737,184 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- ── Audit card ── -->
-                            <Border Background="{DynamicResource BrushCard}"
+                            <!-- ── Breach check card ── -->
+                            <Border DataContext="{Binding SelectedEntry}"
+                                    Background="{DynamicResource BrushCard}"
                                     BorderBrush="{DynamicResource BrushStrokeSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="12"
                                     Padding="16"
-                                    Margin="0,16,0,0"
-                                    Cursor="Hand">
+                                    Margin="0,16,0,0">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="36" Height="36" CornerRadius="8"
-                                            Background="{DynamicResource BrushSuccessSoft}">
-                                        <iconPacks:PackIconMaterial Kind="ShieldCheck"
-                                                                   Width="16" Height="16"
-                                                                   Foreground="{DynamicResource BrushSuccess}"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
-                                        <TextBlock Text="{DynamicResource NotBreached}"
+
+                                    <!-- State: Not checked (default) -->
+                                    <Grid Visibility="{Binding ShowBreachNotChecked,
+                                              Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                Background="{DynamicResource BrushElevated}">
+                                            <iconPacks:PackIconMaterial Kind="ShieldSearch"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                            <TextBlock Text="Breach Check"
+                                                       Foreground="{DynamicResource BrushText}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="13" FontWeight="SemiBold"/>
+                                            <TextBlock Text="k-anonymity · only 5 hash chars sent · password never leaves device"
+                                                       Foreground="{DynamicResource BrushTextTertiary}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnSecondary}"
+                                                Content="Check for Breach"
+                                                Command="{Binding CheckBreachCommand}"
+                                                Padding="12,0" Height="30"
+                                                Margin="10,0,0,0"/>
+                                    </Grid>
+
+                                    <!-- State: Checking (loading) -->
+                                    <Grid Visibility="{Binding ShowBreachChecking,
+                                              Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                Background="{DynamicResource BrushAccentSoft}">
+                                            <iconPacks:PackIconMaterial Kind="ShieldSync"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource BrushAccent}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                            <TextBlock Text="Checking breach database…"
+                                                       Foreground="{DynamicResource BrushText}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="13" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Querying Have I Been Pwned via k-anonymity"
+                                                       Foreground="{DynamicResource BrushTextSecondary}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="11" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnSecondary}"
+                                                Content="Checking…"
+                                                IsEnabled="False"
+                                                Padding="12,0" Height="30"
+                                                Margin="10,0,0,0"/>
+                                    </Grid>
+
+                                    <!-- State: Safe (not found in breaches) -->
+                                    <Grid Visibility="{Binding ShowBreachSafe,
+                                              Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                Background="{DynamicResource BrushSuccessSoft}">
+                                            <iconPacks:PackIconMaterial Kind="ShieldCheck"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource BrushSuccess}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding BreachMessage}"
+                                                   Foreground="{DynamicResource BrushSuccess}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center"
+                                                   Margin="12,0,0,0"/>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnIconSmall}"
+                                                Command="{Binding CheckBreachCommand}"
+                                                ToolTip="Check again"
+                                                Margin="8,0,0,0">
+                                            <iconPacks:PackIconMaterial Kind="Refresh" Width="13" Height="13"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- State: Breached (found in breach database) -->
+                                    <Grid Visibility="{Binding ShowBreachBreached,
+                                              Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                Background="{DynamicResource BrushDangerSoft}">
+                                            <iconPacks:PackIconMaterial Kind="ShieldAlert"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource BrushDanger}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding BreachMessage}"
+                                                   Foreground="{DynamicResource BrushDanger}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center"
+                                                   Margin="12,0,0,0"/>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnIconSmall}"
+                                                Command="{Binding CheckBreachCommand}"
+                                                ToolTip="Check again"
+                                                Margin="8,0,0,0">
+                                            <iconPacks:PackIconMaterial Kind="Refresh" Width="13" Height="13"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- State: Error (no internet or network failure) -->
+                                    <Grid Visibility="{Binding ShowBreachError,
+                                              Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                Background="{DynamicResource BrushWarningSoft}">
+                                            <iconPacks:PackIconMaterial Kind="CloudOffOutline"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource BrushWarning}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding BreachMessage}"
                                                    Foreground="{DynamicResource BrushText}"
                                                    FontFamily="{StaticResource FontPrimary}"
-                                                   FontSize="13" FontWeight="SemiBold"/>
-                                    </StackPanel>
-                                    <iconPacks:PackIconMaterial Grid.Column="2"
-                                                               Kind="ChevronRight"
-                                                               Width="14" Height="14"
-                                                               Foreground="{DynamicResource BrushTextSecondary}"
-                                                               VerticalAlignment="Center"/>
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center"
+                                                   Margin="12,0,0,0"/>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnIconSmall}"
+                                                Command="{Binding CheckBreachCommand}"
+                                                ToolTip="Retry"
+                                                Margin="8,0,0,0">
+                                            <iconPacks:PackIconMaterial Kind="Refresh" Width="13" Height="13"/>
+                                        </Button>
+                                    </Grid>
+
                                 </Grid>
                             </Border>
 

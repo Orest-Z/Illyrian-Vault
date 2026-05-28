@@ -6,6 +6,8 @@ using IllyriaVault.Services;
 
 namespace IllyriaVault.ViewModels;
 
+public enum BreachStatus { NotChecked, Checking, Safe, Breached, Error }
+
 // Wraps a PasswordEntry with display-time computed properties.
 // Java analogy: this is a DTO/Projection on top of the raw Model.
 public partial class EntryViewModel : ObservableObject
@@ -21,6 +23,54 @@ public partial class EntryViewModel : ObservableObject
     // Observable wrapper so UI reacts when ToggleFavorite runs.
     [ObservableProperty]
     private bool _isFavorite;
+
+    // ── Breach check state ─────────────────────────────────────────────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowBreachNotChecked))]
+    [NotifyPropertyChangedFor(nameof(ShowBreachChecking))]
+    [NotifyPropertyChangedFor(nameof(ShowBreachSafe))]
+    [NotifyPropertyChangedFor(nameof(ShowBreachBreached))]
+    [NotifyPropertyChangedFor(nameof(ShowBreachError))]
+    [NotifyCanExecuteChangedFor(nameof(CheckBreachCommand))]
+    private BreachStatus _breachStatus = BreachStatus.NotChecked;
+
+    [ObservableProperty]
+    private string _breachMessage = string.Empty;
+
+    public bool ShowBreachNotChecked => BreachStatus == BreachStatus.NotChecked;
+    public bool ShowBreachChecking   => BreachStatus == BreachStatus.Checking;
+    public bool ShowBreachSafe       => BreachStatus == BreachStatus.Safe;
+    public bool ShowBreachBreached   => BreachStatus == BreachStatus.Breached;
+    public bool ShowBreachError      => BreachStatus == BreachStatus.Error;
+
+    [RelayCommand(CanExecute = nameof(CanCheckBreach))]
+    private async Task CheckBreachAsync()
+    {
+        if (string.IsNullOrEmpty(Model.EncryptedPassword)) return;
+
+        var plaintext = _crypto.Decrypt(Model.EncryptedPassword, _key);
+        BreachStatus  = BreachStatus.Checking;
+        BreachMessage = string.Empty;
+
+        try
+        {
+            var result    = await BreachCheckService.CheckPasswordAsync(plaintext);
+            BreachStatus  = result.IsNetworkUnavailable ? BreachStatus.Error
+                          : result.IsBreached           ? BreachStatus.Breached
+                          :                               BreachStatus.Safe;
+            BreachMessage = result.Message;
+        }
+        catch (Exception ex)
+        {
+            BreachStatus  = BreachStatus.Error;
+            BreachMessage = $"Check failed: {ex.Message}";
+        }
+    }
+
+    private bool CanCheckBreach() => BreachStatus != BreachStatus.Checking;
+
+    // ── Display helpers ────────────────────────────────────────────────────────
 
     partial void OnIsPasswordRevealedChanged(bool value) =>
         OnPropertyChanged(nameof(DisplayPassword));
