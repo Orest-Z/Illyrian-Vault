@@ -72,6 +72,11 @@ public partial class MainViewModel : BaseViewModel
     public string ProfileUsername { get; }
     public string ProfileInitial  => string.IsNullOrEmpty(ProfileUsername) ? "?" : ProfileUsername[0].ToString().ToUpperInvariant();
 
+    // ── Tools ──────────────────────────────────────────────────────────────────
+    public PasswordGeneratorViewModel Generator { get; } = new();
+    public string AppVersion => System.Reflection.Assembly
+        .GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
     // ── Theme / Language ───────────────────────────────────────────────────────
     [ObservableProperty]
     private string _currentTheme = App.Theme.Current switch
@@ -102,10 +107,17 @@ public partial class MainViewModel : BaseViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedEntry))]
     [NotifyPropertyChangedFor(nameof(HasNoSelectedEntry))]
+    [NotifyPropertyChangedFor(nameof(ShowEntryDetail))]
+    [NotifyPropertyChangedFor(nameof(ShowEntryEmpty))]
     private EntryViewModel? _selectedEntry;
 
-    public bool HasSelectedEntry  => SelectedEntry is not null;
+    public bool HasSelectedEntry   => SelectedEntry is not null;
     public bool HasNoSelectedEntry => SelectedEntry is null;
+    public bool IsVaultSection     => SelectedSection is not ("generator" or "settings");
+    public bool IsGeneratorSection => SelectedSection == "generator";
+    public bool IsSettingsSection  => SelectedSection == "settings";
+    public bool ShowEntryDetail    => IsVaultSection && SelectedEntry is not null;
+    public bool ShowEntryEmpty     => IsVaultSection && SelectedEntry is null;
 
     // ── Search / filter state ──────────────────────────────────────────────────
     [ObservableProperty]
@@ -114,6 +126,11 @@ public partial class MainViewModel : BaseViewModel
     partial void OnSearchQueryChanged(string value) => ApplyFilter();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsVaultSection))]
+    [NotifyPropertyChangedFor(nameof(IsGeneratorSection))]
+    [NotifyPropertyChangedFor(nameof(IsSettingsSection))]
+    [NotifyPropertyChangedFor(nameof(ShowEntryDetail))]
+    [NotifyPropertyChangedFor(nameof(ShowEntryEmpty))]
     private string _selectedSection = "all";
 
     partial void OnSelectedSectionChanged(string value) => ApplyFilter();

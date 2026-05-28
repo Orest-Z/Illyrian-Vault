@@ -86,4 +86,28 @@
     <sys:String x:Key="CatCard">Card</sys:String>
     <sys:String x:Key="CatIdentity">Identity</sys:String>
 
+    <!-- Password Generator -->
+    <sys:String x:Key="GenTitle">Password Generator</sys:String>
+    <sys:String x:Key="GenLength">LENGTH</sys:String>
+    <sys:String x:Key="GenCharset">CHARACTER SET</sys:String>
+    <sys:String x:Key="GenUppercase">Uppercase (A–Z)</sys:String>
+    <sys:String x:Key="GenLowercase">Lowercase (a–z)</sys:String>
+    <sys:String x:Key="GenNumbers">Numbers (0–9)</sys:String>
+    <sys:String x:Key="GenSymbols">Symbols (!@#$)</sys:String>
+    <sys:String x:Key="GenPassphrase">Passphrase Mode</sys:String>
+    <sys:String x:Key="GenWordCount">WORD COUNT</sys:String>
+    <sys:String x:Key="GenGenerate">Generate</sys:String>
+    <sys:String x:Key="GenCopy">Copy to Clipboard</sys:String>
+    <sys:String x:Key="GenUsePassword">Use This Password</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="SettingsTitle">Settings</sys:String>
+    <sys:String x:Key="SettingsTheme">APPEARANCE</sys:String>
+    <sys:String x:Key="SettingsLanguage">LANGUAGE</sys:String>
+    <sys:String x:Key="SettingsVersion">VERSION</sys:String>
+    <sys:String x:Key="SettingsThemeLight">Light</sys:String>
+    <sys:String x:Key="SettingsThemeDark">Dark</sys:String>
+    <sys:String x:Key="SettingsThemeRed">Kuq e Zi</sys:String>
+    <sys:String x:Key="SettingsDeveloper">Developed By Orest Zogju</sys:String>
+
 </ResourceDictionary>

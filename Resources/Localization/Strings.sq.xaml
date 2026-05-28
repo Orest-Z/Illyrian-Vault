@@ -79,4 +79,28 @@
     <sys:String x:Key="CatCard">Kartë</sys:String>
     <sys:String x:Key="CatIdentity">Identitet</sys:String>
 
+    <!-- Password Generator -->
+    <sys:String x:Key="GenTitle">Gjenerues Fjalëkalimi</sys:String>
+    <sys:String x:Key="GenLength">GJATËSIA</sys:String>
+    <sys:String x:Key="GenCharset">KARAKTERET</sys:String>
+    <sys:String x:Key="GenUppercase">Shkronja të mëdha (A–Z)</sys:String>
+    <sys:String x:Key="GenLowercase">Shkronja të vogla (a–z)</sys:String>
+    <sys:String x:Key="GenNumbers">Numra (0–9)</sys:String>
+    <sys:String x:Key="GenSymbols">Simbole (!@#$)</sys:String>
+    <sys:String x:Key="GenPassphrase">Mënyra frazë</sys:String>
+    <sys:String x:Key="GenWordCount">NUMRI I FJALËVE</sys:String>
+    <sys:String x:Key="GenGenerate">Gjenero</sys:String>
+    <sys:String x:Key="GenCopy">Kopjo në kujtesë</sys:String>
+    <sys:String x:Key="GenUsePassword">Përdor Këtë Fjalëkalim</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="SettingsTitle">Cilësimet</sys:String>
+    <sys:String x:Key="SettingsTheme">PAMJA</sys:String>
+    <sys:String x:Key="SettingsLanguage">GJUHA</sys:String>
+    <sys:String x:Key="SettingsVersion">VERSIONI</sys:String>
+    <sys:String x:Key="SettingsThemeLight">E lehtë</sys:String>
+    <sys:String x:Key="SettingsThemeDark">E errët</sys:String>
+    <sys:String x:Key="SettingsThemeRed">Kuq e Zi</sys:String>
+    <sys:String x:Key="SettingsDeveloper">Zhvilluar nga Orest Zogju</sys:String>
+
 </ResourceDictionary>

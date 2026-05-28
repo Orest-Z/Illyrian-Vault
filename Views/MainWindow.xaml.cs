@@ -70,6 +70,17 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         if (PresentationSource.FromVisual(this) is HwndSource src)
             src.AddHook(WndProc);
+
+        // XAML sets WindowState=Maximized before the HWND exists, so the first
+        // WM_GETMINMAXINFO fires before our hook is installed and the OS ignores
+        // AdjustMaximizedRect, letting the window bleed under the taskbar.
+        // Re-triggering the transition here (before first paint) forces the OS to
+        // re-evaluate the max rect with the hook already in place.
+        if (WindowState == WindowState.Maximized)
+        {
+            WindowState = WindowState.Normal;
+            WindowState = WindowState.Maximized;
+        }
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

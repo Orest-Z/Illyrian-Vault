@@ -8,13 +8,15 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="CanResize"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Width="1320" Height="800"
         MinWidth="900" MinHeight="600">
 
     <Window.Resources>
-        <conv:EqualityConverter    x:Key="EqConv"/>
-        <conv:FavoriteIconConverter x:Key="FavIcon"/>
+        <conv:EqualityConverter      x:Key="EqConv"/>
+        <conv:FavoriteIconConverter  x:Key="FavIcon"/>
+        <conv:InverseBooleanConverter x:Key="InvBool"/>
 
         <!-- Nav RadioButton — looks like NavItem but uses RadioButton selection model -->
         <Style x:Key="NavRadioItem" TargetType="RadioButton">
@@ -554,7 +556,7 @@
 
                     <!-- Empty state -->
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Visibility="{Binding HasNoSelectedEntry, Converter={StaticResource BoolToVis}}">
+                                Visibility="{Binding ShowEntryEmpty, Converter={StaticResource BoolToVis}}">
                         <iconPacks:PackIconMaterial Kind="ShieldLock"
                                                    Width="48" Height="48"
                                                    Foreground="{DynamicResource BrushAccentSoft}"
@@ -570,7 +572,7 @@
                     <!-- Entry detail (scrollable) -->
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   Padding="32,28,32,28"
-                                  Visibility="{Binding HasSelectedEntry, Converter={StaticResource BoolToVis}}">
+                                  Visibility="{Binding ShowEntryDetail, Converter={StaticResource BoolToVis}}">
                         <StackPanel>
 
                             <!-- ── Detail header ── -->
@@ -616,7 +618,7 @@
                                                    Margin="8,0,0,0">
                                             <Run Text="{DynamicResource UpdatedLabel}"/>
                                             <Run Text=" "/>
-                                            <Run Text="{Binding SelectedEntry.UpdatedFormatted}"/>
+                                            <Run Text="{Binding SelectedEntry.UpdatedFormatted, Mode=OneWay}"/>
                                         </TextBlock>
                                     </StackPanel>
                                 </StackPanel>
@@ -760,6 +762,252 @@
 
                         </StackPanel>
                     </ScrollViewer>
+
+                    <!-- ── Password Generator Panel ──────────────────────── -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Padding="32,28,32,28"
+                                  Visibility="{Binding IsGeneratorSection, Converter={StaticResource BoolToVis}}">
+                        <StackPanel DataContext="{Binding Generator}">
+
+                            <!-- Header -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                <Border Width="44" Height="44" CornerRadius="12"
+                                        Background="{DynamicResource BrushAccentSoft}">
+                                    <iconPacks:PackIconMaterial Kind="KeyVariant" Width="20" Height="20"
+                                                                Foreground="{DynamicResource BrushAccent}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{DynamicResource GenTitle}"
+                                           Foreground="{DynamicResource BrushText}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="{StaticResource FontSectionHead}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Margin="14,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- Length slider -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <TextBlock Text="{DynamicResource GenLength}"
+                                                   Style="{StaticResource FieldLabel}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border HorizontalAlignment="Right"
+                                                Background="{DynamicResource BrushElevated}"
+                                                BorderBrush="{DynamicResource BrushStroke}"
+                                                BorderThickness="1" CornerRadius="6"
+                                                Padding="10,3">
+                                            <TextBlock Text="{Binding Length}"
+                                                       Foreground="{DynamicResource BrushAccent}"
+                                                       FontFamily="{StaticResource FontMono}"
+                                                       FontSize="{StaticResource FontBody}"
+                                                       FontWeight="SemiBold"/>
+                                        </Border>
+                                    </Grid>
+                                    <Slider Value="{Binding Length, Mode=TwoWay}"
+                                            Minimum="8" Maximum="128"
+                                            SmallChange="1" LargeChange="8"
+                                            IsSnapToTickEnabled="True" TickFrequency="1"
+                                            IsEnabled="{Binding UsePassphrase, Converter={StaticResource InvBool}}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Character set options -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14"
+                                    IsEnabled="{Binding UsePassphrase, Converter={StaticResource InvBool}}">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource GenCharset}"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0,0,0,14"/>
+                                    <CheckBox Style="{StaticResource VaultCheckBox}"
+                                              Content="{DynamicResource GenUppercase}"
+                                              IsChecked="{Binding UseUppercase, Mode=TwoWay}"
+                                              Margin="0,0,0,10"/>
+                                    <CheckBox Style="{StaticResource VaultCheckBox}"
+                                              Content="{DynamicResource GenLowercase}"
+                                              IsChecked="{Binding UseLowercase, Mode=TwoWay}"
+                                              Margin="0,0,0,10"/>
+                                    <CheckBox Style="{StaticResource VaultCheckBox}"
+                                              Content="{DynamicResource GenNumbers}"
+                                              IsChecked="{Binding UseNumbers, Mode=TwoWay}"
+                                              Margin="0,0,0,10"/>
+                                    <CheckBox Style="{StaticResource VaultCheckBox}"
+                                              Content="{DynamicResource GenSymbols}"
+                                              IsChecked="{Binding UseSymbols, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Passphrase mode -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <CheckBox Style="{StaticResource VaultCheckBox}"
+                                              Content="{DynamicResource GenPassphrase}"
+                                              IsChecked="{Binding UsePassphrase, Mode=TwoWay}"/>
+                                    <StackPanel Visibility="{Binding UsePassphrase, Converter={StaticResource BoolToVis}}"
+                                                Margin="0,14,0,0">
+                                        <Grid Margin="0,0,0,10">
+                                            <TextBlock Text="{DynamicResource GenWordCount}"
+                                                       Style="{StaticResource FieldLabel}"
+                                                       VerticalAlignment="Center"/>
+                                            <Border HorizontalAlignment="Right"
+                                                    Background="{DynamicResource BrushElevated}"
+                                                    BorderBrush="{DynamicResource BrushStroke}"
+                                                    BorderThickness="1" CornerRadius="6"
+                                                    Padding="10,3">
+                                                <TextBlock Text="{Binding WordCount}"
+                                                           Foreground="{DynamicResource BrushAccent}"
+                                                           FontFamily="{StaticResource FontMono}"
+                                                           FontSize="{StaticResource FontBody}"
+                                                           FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                        <Slider Value="{Binding WordCount, Mode=TwoWay}"
+                                                Minimum="2" Maximum="10"
+                                                SmallChange="1" LargeChange="1"
+                                                IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Generate button -->
+                            <Button Style="{StaticResource BtnPrimary}"
+                                    Content="{DynamicResource GenGenerate}"
+                                    Command="{Binding GenerateCommand}"
+                                    Height="44"
+                                    Margin="0,0,0,14"/>
+
+                            <!-- Result card -->
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Border Background="{DynamicResource BrushElevated}"
+                                            BorderBrush="{DynamicResource BrushStroke}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Padding="14,12" MinHeight="48"
+                                            Margin="0,0,0,12">
+                                        <TextBlock Text="{Binding GeneratedPassword}"
+                                                   Foreground="{DynamicResource BrushText}"
+                                                   FontFamily="{StaticResource FontMono}"
+                                                   FontSize="13"
+                                                   TextWrapping="Wrap"/>
+                                    </Border>
+                                    <Button Style="{StaticResource BtnSecondary}"
+                                            Content="{DynamicResource GenCopy}"
+                                            Command="{Binding CopyToClipboardCommand}"
+                                            Height="38"/>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ── Settings Panel ─────────────────────────────────── -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Padding="32,28,32,28"
+                                  Visibility="{Binding IsSettingsSection, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+
+                            <!-- Header -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                <Border Width="44" Height="44" CornerRadius="12"
+                                        Background="{DynamicResource BrushElevated}">
+                                    <iconPacks:PackIconMaterial Kind="Cog" Width="20" Height="20"
+                                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{DynamicResource SettingsTitle}"
+                                           Foreground="{DynamicResource BrushText}"
+                                           FontFamily="{StaticResource FontPrimary}"
+                                           FontSize="{StaticResource FontSectionHead}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Margin="14,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- Appearance -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource SettingsTheme}"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0,0,0,14"/>
+                                    <Border Background="{DynamicResource BrushElevated}"
+                                            BorderBrush="{DynamicResource BrushStroke}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Padding="2" Height="36">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Style="{StaticResource SegButton}"
+                                                         Content="{DynamicResource SettingsThemeLight}"
+                                                         GroupName="SettingsThemeSel"
+                                                         IsChecked="{Binding CurrentTheme, Converter={StaticResource EqConv}, ConverterParameter=Light}"/>
+                                            <RadioButton Style="{StaticResource SegButton}"
+                                                         Content="{DynamicResource SettingsThemeDark}"
+                                                         GroupName="SettingsThemeSel"
+                                                         IsChecked="{Binding CurrentTheme, Converter={StaticResource EqConv}, ConverterParameter=Dark}"/>
+                                            <RadioButton Style="{StaticResource SegButton}"
+                                                         Content="{DynamicResource SettingsThemeRed}"
+                                                         GroupName="SettingsThemeSel"
+                                                         IsChecked="{Binding CurrentTheme, Converter={StaticResource EqConv}, ConverterParameter=Red}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Language -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource SettingsLanguage}"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0,0,0,14"/>
+                                    <Border Background="{DynamicResource BrushElevated}"
+                                            BorderBrush="{DynamicResource BrushStroke}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Padding="2" Height="36">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Style="{StaticResource SegButton}"
+                                                         Content="English (EN)"
+                                                         GroupName="SettingsLangSel"
+                                                         IsChecked="{Binding CurrentLanguage, Converter={StaticResource EqConv}, ConverterParameter=EN}"/>
+                                            <RadioButton Style="{StaticResource SegButton}"
+                                                         Content="Shqip (SQ)"
+                                                         GroupName="SettingsLangSel"
+                                                         IsChecked="{Binding CurrentLanguage, Converter={StaticResource EqConv}, ConverterParameter=SQ}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Version -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{DynamicResource SettingsVersion}"
+                                               Style="{StaticResource FieldLabel}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding AppVersion}"
+                                               Foreground="{DynamicResource BrushTextSecondary}"
+                                               FontFamily="{StaticResource FontMono}"
+                                               FontSize="{StaticResource FontBody}"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Developer credit -->
+                            <TextBlock Text="{DynamicResource SettingsDeveloper}"
+                                       Foreground="{DynamicResource BrushTextTertiary}"
+                                       FontFamily="{StaticResource FontPrimary}"
+                                       FontSize="11"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,40,0,0"/>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
                 </Grid>
             </Grid>
         </Grid>

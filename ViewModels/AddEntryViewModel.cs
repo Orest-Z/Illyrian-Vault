@@ -23,10 +23,14 @@ public partial class AddEntryViewModel : BaseViewModel
     [ObservableProperty] private string _notes            = string.Empty;
     [ObservableProperty] private string _selectedCategory = "Login";
 
+    public PasswordGeneratorViewModel Generator { get; }
+
     public AddEntryViewModel(EncryptionService crypto, byte[] sessionKey)
     {
         _crypto     = crypto;
         _sessionKey = sessionKey;
+        Generator   = new PasswordGeneratorViewModel();
+        Generator.PasswordAccepted += p => Password = p;
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
