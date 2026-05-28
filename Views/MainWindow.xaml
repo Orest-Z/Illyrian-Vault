@@ -534,11 +534,11 @@
 
                                     <!-- Title + username -->
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
-                                        <TextBlock Text="{Binding Model.Title}"
+                                        <TextBlock Text="{Binding DisplayTitle}"
                                                    Foreground="{DynamicResource BrushText}"
                                                    FontFamily="{StaticResource FontPrimary}"
                                                    FontSize="13" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding Model.Username}"
+                                        <TextBlock Text="{Binding DisplayUsername}"
                                                    Foreground="{DynamicResource BrushTextSecondary}"
                                                    FontFamily="{StaticResource FontPrimary}"
                                                    FontSize="12"
@@ -611,12 +611,18 @@
 
                                 <!-- Title + category chip + updated -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+                                    <!-- View mode title -->
                                     <TextBlock Text="{Binding SelectedEntry.Model.Title}"
                                                Foreground="{DynamicResource BrushText}"
                                                FontFamily="{StaticResource FontPrimary}"
                                                FontSize="{StaticResource FontCardHead}"
                                                FontWeight="SemiBold"
-                                               TextTrimming="CharacterEllipsis"/>
+                                               TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding SelectedEntry.IsNotEditing, Converter={StaticResource BoolToVis}}"/>
+                                    <!-- Edit mode title -->
+                                    <TextBox Style="{StaticResource InputBox}"
+                                             Text="{Binding SelectedEntry.EditTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Visibility="{Binding SelectedEntry.IsEditing, Converter={StaticResource BoolToVis}}"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                         <Border Style="{StaticResource Chip}">
                                             <TextBlock Text="{Binding SelectedEntry.Model.Category}"
@@ -636,9 +642,16 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Action icons: favorite + delete -->
+                                <!-- Action icons: view mode (Edit + Favorite + Delete) -->
                                 <StackPanel Grid.Column="2" Orientation="Horizontal"
-                                            VerticalAlignment="Top">
+                                            VerticalAlignment="Top"
+                                            Visibility="{Binding SelectedEntry.IsNotEditing, Converter={StaticResource BoolToVis}}">
+                                    <Button Style="{StaticResource BtnIcon}"
+                                            Command="{Binding SelectedEntry.EditCommand}"
+                                            ToolTip="Edit entry">
+                                        <iconPacks:PackIconMaterial Kind="Pencil" Width="16" Height="16"
+                                                                    Foreground="{DynamicResource BrushTextSecondary}"/>
+                                    </Button>
                                     <Button Style="{StaticResource BtnIcon}"
                                             Command="{Binding ToggleFavoriteCommand}"
                                             ToolTip="Toggle favorite">
@@ -654,6 +667,20 @@
                                                                     Foreground="{DynamicResource BrushDanger}"/>
                                     </Button>
                                 </StackPanel>
+
+                                <!-- Action icons: edit mode (Save + Cancel) -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                            VerticalAlignment="Top"
+                                            Visibility="{Binding SelectedEntry.IsEditing, Converter={StaticResource BoolToVis}}">
+                                    <Button Style="{StaticResource BtnPrimary}"
+                                            Content="Save"
+                                            Command="{Binding SelectedEntry.SaveCommand}"
+                                            Height="30" Padding="14,0"/>
+                                    <Button Style="{StaticResource BtnSecondary}"
+                                            Content="Cancel"
+                                            Command="{Binding SelectedEntry.CancelEditCommand}"
+                                            Height="30" Padding="12,0" Margin="8,0,0,0"/>
+                                </StackPanel>
                             </Grid>
 
                             <!-- ── Fields card ── -->
@@ -662,7 +689,9 @@
                                     <!-- Username row -->
                                     <TextBlock Text="{DynamicResource FieldUsername}"
                                                Style="{StaticResource FieldLabel}"/>
-                                    <Grid Margin="0,8,0,0">
+                                    <!-- View mode -->
+                                    <Grid Margin="0,8,0,0"
+                                          Visibility="{Binding SelectedEntry.IsNotEditing, Converter={StaticResource BoolToVis}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -679,13 +708,20 @@
                                             <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13"/>
                                         </Button>
                                     </Grid>
+                                    <!-- Edit mode -->
+                                    <TextBox Style="{StaticResource InputBox}"
+                                             Text="{Binding SelectedEntry.EditUsername, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,8,0,0"
+                                             Visibility="{Binding SelectedEntry.IsEditing, Converter={StaticResource BoolToVis}}"/>
 
                                     <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
                                     <!-- Password row -->
                                     <TextBlock Text="{DynamicResource FieldPassword}"
                                                Style="{StaticResource FieldLabel}"/>
-                                    <Grid Margin="0,8,0,0">
+                                    <!-- View mode -->
+                                    <Grid Margin="0,8,0,0"
+                                          Visibility="{Binding SelectedEntry.IsNotEditing, Converter={StaticResource BoolToVis}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -708,18 +744,31 @@
                                             <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13"/>
                                         </Button>
                                     </Grid>
+                                    <!-- Edit mode -->
+                                    <TextBox Style="{StaticResource InputBox}"
+                                             Text="{Binding SelectedEntry.EditPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             FontFamily="{StaticResource FontMono}"
+                                             Margin="0,8,0,0"
+                                             Visibility="{Binding SelectedEntry.IsEditing, Converter={StaticResource BoolToVis}}"/>
 
                                     <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
                                     <!-- Website row -->
                                     <TextBlock Text="{DynamicResource FieldWebsite}"
                                                Style="{StaticResource FieldLabel}"/>
+                                    <!-- View mode -->
                                     <TextBlock Text="{Binding SelectedEntry.Model.Url}"
                                                Foreground="{DynamicResource BrushText}"
                                                FontFamily="{StaticResource FontPrimary}"
                                                FontSize="{StaticResource FontInput}"
                                                Margin="0,8,0,0"
-                                               TextTrimming="CharacterEllipsis"/>
+                                               TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding SelectedEntry.IsNotEditing, Converter={StaticResource BoolToVis}}"/>
+                                    <!-- Edit mode -->
+                                    <TextBox Style="{StaticResource InputBox}"
+                                             Text="{Binding SelectedEntry.EditUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,8,0,0"
+                                             Visibility="{Binding SelectedEntry.IsEditing, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
                             </Border>
 
@@ -728,12 +777,111 @@
                                 <StackPanel>
                                     <TextBlock Text="{DynamicResource FieldNotes}"
                                                Style="{StaticResource FieldLabel}"/>
+                                    <!-- View mode -->
                                     <TextBlock Text="{Binding SelectedEntry.Model.Notes}"
                                                Foreground="{DynamicResource BrushText}"
                                                FontFamily="{StaticResource FontPrimary}"
                                                FontSize="13"
                                                TextWrapping="Wrap"
-                                               Margin="0,8,0,0"/>
+                                               Margin="0,8,0,0"
+                                               Visibility="{Binding SelectedEntry.IsNotEditing, Converter={StaticResource BoolToVis}}"/>
+                                    <!-- Edit mode -->
+                                    <TextBox Style="{StaticResource InputBox}"
+                                             Text="{Binding SelectedEntry.EditNotes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             MinHeight="72"
+                                             VerticalContentAlignment="Top"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,8,0,0"
+                                             Visibility="{Binding SelectedEntry.IsEditing, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- ── Password history card ── -->
+                            <Border DataContext="{Binding SelectedEntry}"
+                                    Background="{DynamicResource BrushCard}"
+                                    BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Padding="16"
+                                    Margin="0,16,0,0">
+                                <StackPanel>
+                                    <!-- Header row -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="8"
+                                                Background="{DynamicResource BrushElevated}">
+                                            <iconPacks:PackIconMaterial Kind="History"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                            <TextBlock Text="Password History"
+                                                       Foreground="{DynamicResource BrushText}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="13" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Previous passwords for this entry"
+                                                       Foreground="{DynamicResource BrushTextTertiary}"
+                                                       FontFamily="{StaticResource FontPrimary}"
+                                                       FontSize="11" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="2"
+                                                Style="{StaticResource BtnSecondary}"
+                                                Content="{DynamicResource ViewHistory}"
+                                                Command="{Binding ToggleHistoryCommand}"
+                                                Padding="12,0" Height="30"
+                                                Margin="10,0,0,0"/>
+                                    </Grid>
+
+                                    <!-- Expandable history list -->
+                                    <StackPanel Visibility="{Binding ShowHistory, Converter={StaticResource BoolToVis}}"
+                                                Margin="0,12,0,0">
+                                        <!-- Empty state -->
+                                        <TextBlock Text="No password history yet."
+                                                   Foreground="{DynamicResource BrushTextTertiary}"
+                                                   FontFamily="{StaticResource FontPrimary}"
+                                                   FontSize="12"
+                                                   Visibility="{Binding ShowHistoryEmpty, Converter={StaticResource BoolToVis}}"
+                                                   Margin="0,4,0,0"/>
+                                        <!-- History items -->
+                                        <ItemsControl ItemsSource="{Binding History}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{DynamicResource BrushElevated}"
+                                                            BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Padding="12,10" Margin="0,4,0,0">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Plaintext}"
+                                                                       Foreground="{DynamicResource BrushText}"
+                                                                       FontFamily="{StaticResource FontMono}"
+                                                                       FontSize="12"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding DateLabel}"
+                                                                       Foreground="{DynamicResource BrushTextTertiary}"
+                                                                       FontFamily="{StaticResource FontPrimary}"
+                                                                       FontSize="11"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="16,0,0,0"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 

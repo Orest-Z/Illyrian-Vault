@@ -8,14 +8,30 @@ namespace IllyriaVault.ViewModels;
 
 public enum BreachStatus { NotChecked, Checking, Safe, Breached, Error }
 
+public class PasswordHistoryItemVm
+{
+    public string Plaintext { get; }
+    public string DateLabel { get; }
+
+    public PasswordHistoryItemVm(string encryptedPassword, DateTime createdAt, EncryptionService crypto, byte[] key)
+    {
+        Plaintext = crypto.Decrypt(encryptedPassword, key);
+        DateLabel = createdAt.ToLocalTime().ToString("MMM dd, yyyy  HH:mm");
+    }
+}
+
 // Wraps a PasswordEntry with display-time computed properties.
 // Java analogy: this is a DTO/Projection on top of the raw Model.
 public partial class EntryViewModel : ObservableObject
 {
     private readonly EncryptionService _crypto;
     private readonly byte[]            _key;
+    private readonly DatabaseService   _db;
 
     public PasswordEntry Model { get; }
+
+    // Fired after a successful save so MainViewModel can refresh SelectedEntry bindings.
+    public event Action? SaveCompleted;
 
     [ObservableProperty]
     private bool _isPasswordRevealed;
@@ -70,6 +86,88 @@ public partial class EntryViewModel : ObservableObject
 
     private bool CanCheckBreach() => BreachStatus != BreachStatus.Checking;
 
+    // ── Edit state ─────────────────────────────────────────────────────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotEditing))]
+    private bool _isEditing;
+
+    public bool IsNotEditing => !IsEditing;
+
+    [ObservableProperty] private string _editTitle    = string.Empty;
+    [ObservableProperty] private string _editUsername = string.Empty;
+    [ObservableProperty] private string _editPassword = string.Empty;
+    [ObservableProperty] private string _editUrl      = string.Empty;
+    [ObservableProperty] private string _editNotes    = string.Empty;
+
+    [RelayCommand]
+    private void Edit()
+    {
+        EditTitle    = Model.Title;
+        EditUsername = Model.Username;
+        EditPassword = string.IsNullOrEmpty(Model.EncryptedPassword)
+            ? string.Empty
+            : _crypto.Decrypt(Model.EncryptedPassword, _key);
+        EditUrl      = Model.Url;
+        EditNotes    = Model.Notes;
+        IsEditing    = true;
+    }
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        var oldEncrypted = Model.EncryptedPassword;
+        var newEncrypted = string.IsNullOrWhiteSpace(EditPassword)
+            ? string.Empty
+            : _crypto.Encrypt(EditPassword, _key);
+
+        // Archive the old password if it changed and there was one.
+        if (!string.IsNullOrEmpty(oldEncrypted) && oldEncrypted != newEncrypted)
+            await _db.InsertPasswordHistoryAsync(Model.Id, oldEncrypted);
+
+        Model.Title             = EditTitle;
+        Model.Username          = EditUsername;
+        Model.EncryptedPassword = newEncrypted;
+        Model.Url               = EditUrl;
+        Model.Notes             = EditNotes;
+
+        await _db.UpdateEntryAsync(Model);
+
+        IsEditing = false;
+        OnPropertyChanged(nameof(DisplayTitle));
+        OnPropertyChanged(nameof(DisplayUsername));
+        OnPropertyChanged(nameof(TileInitial));
+        OnPropertyChanged(nameof(UpdatedFormatted));
+        OnPropertyChanged(nameof(DisplayPassword));
+        SaveCompleted?.Invoke();
+    }
+
+    [RelayCommand]
+    private void CancelEdit() => IsEditing = false;
+
+    // ── Password history ───────────────────────────────────────────────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowHistoryEmpty))]
+    private bool _showHistory;
+
+    public ObservableCollection<PasswordHistoryItemVm> History { get; } = [];
+    public bool ShowHistoryEmpty => History.Count == 0;
+
+    [RelayCommand]
+    private async Task ToggleHistoryAsync()
+    {
+        if (!ShowHistory)
+        {
+            History.Clear();
+            var rows = await _db.GetPasswordHistoryAsync(Model.Id);
+            foreach (var r in rows)
+                History.Add(new PasswordHistoryItemVm(r.EncryptedPassword, r.CreatedAt, _crypto, _key));
+            OnPropertyChanged(nameof(ShowHistoryEmpty));
+        }
+        ShowHistory = !ShowHistory;
+    }
+
     // ── Display helpers ────────────────────────────────────────────────────────
 
     partial void OnIsPasswordRevealedChanged(bool value) =>
@@ -89,6 +187,8 @@ public partial class EntryViewModel : ObservableObject
             : (System.Windows.Application.Current.TryFindResource("BrushTextSecondary") as System.Windows.Media.Brush)
               ?? System.Windows.Media.Brushes.Gray;
 
+    public string DisplayTitle    => Model.Title;
+    public string DisplayUsername => Model.Username;
     public string TileInitial      => string.IsNullOrEmpty(Model.Title) ? "?" : Model.Title[0].ToString().ToUpperInvariant();
     public string UpdatedFormatted => Model.UpdatedAt.ToString("MMM dd, yyyy");
 
@@ -97,11 +197,12 @@ public partial class EntryViewModel : ObservableObject
             ? _crypto.Decrypt(Model.EncryptedPassword, _key)
             : "••••••••••••••••";
 
-    public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key)
+    public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key, DatabaseService db)
     {
         Model       = model;
         _crypto     = crypto;
         _key        = key;
+        _db         = db;
         _isFavorite = model.IsFavorite;
     }
 }
@@ -206,11 +307,17 @@ public partial class MainViewModel : BaseViewModel
             var entries = await _db.GetAllEntriesAsync();
             _allEntries.Clear();
             foreach (var e in entries)
-                _allEntries.Add(new EntryViewModel(e, _crypto, _sessionKey));
+                AddEntryVm(new EntryViewModel(e, _crypto, _sessionKey, _db));
             ApplyFilter();
             RefreshCounts();
         }
         finally { IsBusy = false; }
+    }
+
+    private void AddEntryVm(EntryViewModel vm)
+    {
+        vm.SaveCompleted += () => OnPropertyChanged(nameof(SelectedEntry));
+        _allEntries.Add(vm);
     }
 
     [RelayCommand]
@@ -261,7 +368,7 @@ public partial class MainViewModel : BaseViewModel
     public async Task InsertNewEntryAsync(PasswordEntry e)
     {
         e.Id = await _db.InsertEntryAsync(e);
-        _allEntries.Add(new EntryViewModel(e, _crypto, _sessionKey));
+        AddEntryVm(new EntryViewModel(e, _crypto, _sessionKey, _db));
         ApplyFilter();
         RefreshCounts();
         SelectedEntry = FilteredEntries.FirstOrDefault(x => x.Model.Id == e.Id);

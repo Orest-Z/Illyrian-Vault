@@ -140,6 +140,15 @@ public sealed class DatabaseService : IAsyncDisposable
             );
             """);
 
+        await ExecAsync("""
+            CREATE TABLE IF NOT EXISTS PasswordHistory (
+                Id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntryId           INTEGER NOT NULL REFERENCES PasswordEntries(Id) ON DELETE CASCADE,
+                EncryptedPassword TEXT    NOT NULL DEFAULT '',
+                CreatedAt         TEXT    NOT NULL
+            );
+            """);
+
         // Migrate older vaults that were created before Phase 2.
         try { await ExecAsync("ALTER TABLE Users ADD COLUMN Username TEXT NOT NULL DEFAULT '';"); }
         catch (Microsoft.Data.Sqlite.SqliteException) { }
@@ -245,6 +254,37 @@ public sealed class DatabaseService : IAsyncDisposable
             P("@Fav", isFavorite ? 1 : 0),
             P("@Now", Iso(DateTime.UtcNow)),
             P("@Id",  id));
+
+    // ── PasswordHistory ────────────────────────────────────────────────────────
+
+    public async Task InsertPasswordHistoryAsync(long entryId, string encryptedPassword)
+    {
+        await ExecAsync("""
+            INSERT INTO PasswordHistory (EntryId, EncryptedPassword, CreatedAt)
+            VALUES (@EntryId, @Pw, @Created);
+            """,
+            P("@EntryId", entryId),
+            P("@Pw",      encryptedPassword),
+            P("@Created", Iso(DateTime.UtcNow)));
+    }
+
+    public async Task<List<IllyriaVault.Models.PasswordHistory>> GetPasswordHistoryAsync(long entryId)
+    {
+        var list = new List<IllyriaVault.Models.PasswordHistory>();
+        await using var cmd = Cmd(
+            "SELECT * FROM PasswordHistory WHERE EntryId = @Id ORDER BY CreatedAt DESC;",
+            P("@Id", entryId));
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            list.Add(new IllyriaVault.Models.PasswordHistory
+            {
+                Id                = reader.GetInt64(reader.GetOrdinal("Id")),
+                EntryId           = reader.GetInt64(reader.GetOrdinal("EntryId")),
+                EncryptedPassword = reader.GetString(reader.GetOrdinal("EncryptedPassword")),
+                CreatedAt         = DateTime.Parse(reader.GetString(reader.GetOrdinal("CreatedAt"))),
+            });
+        return list;
+    }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
