@@ -4,6 +4,7 @@
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:conv="clr-namespace:IllyriaVault.Converters"
         Title="Illyria Vault"
+        Icon="/IllyriaVault.png"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"

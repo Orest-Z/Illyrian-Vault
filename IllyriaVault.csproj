@@ -10,7 +10,12 @@
     <RootNamespace>IllyriaVault</RootNamespace>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationIcon>IllyriaVault.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="IllyriaVault.png"/>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.11.0" />
