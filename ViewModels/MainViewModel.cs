@@ -7,7 +7,8 @@ using IllyrianVault.Services;
 
 namespace IllyrianVault.ViewModels;
 
-public enum BreachStatus { NotChecked, Checking, Safe, Breached, Error }
+public enum BreachStatus  { NotChecked, Checking, Safe, Breached, Error }
+public enum WorkspaceState { Vault, Settings, Generator }
 
 public class PasswordHistoryItemVm
 {
@@ -359,7 +360,19 @@ public partial class MainViewModel : BaseViewModel
     [NotifyPropertyChangedFor(nameof(ShowEntryEmpty))]
     private string _selectedSection = "all";
 
-    partial void OnSelectedSectionChanged(string value) => ApplyFilter();
+    partial void OnSelectedSectionChanged(string value)
+    {
+        CurrentWorkspace = value switch
+        {
+            "settings"  => WorkspaceState.Settings,
+            "generator" => WorkspaceState.Generator,
+            _           => WorkspaceState.Vault,
+        };
+        ApplyFilter();
+    }
+
+    [ObservableProperty]
+    private WorkspaceState _currentWorkspace = WorkspaceState.Vault;
 
     // ── Nav badge counts ───────────────────────────────────────────────────────
     public int TotalCount    => _allEntries.Count;

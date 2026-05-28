@@ -10,11 +10,11 @@
     <RootNamespace>IllyrianVault</RootNamespace>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <ApplicationIcon>IllyriaVault.ico</ApplicationIcon>
+    <ApplicationIcon>IllyrianVault.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Resource Include="IllyriaVault.png"/>
+    <Resource Include="IllyrianVault.png"/>
   </ItemGroup>
 
   <ItemGroup>
