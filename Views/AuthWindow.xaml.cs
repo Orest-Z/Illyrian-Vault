@@ -16,10 +16,17 @@ public partial class AuthWindow : Window
 
     public AuthWindow()
     {
+        WindowMaximizeHelper.CapToWorkArea(this);
         InitializeComponent();
         _vm = new AuthViewModel(App.Encryption, App.Database);
         DataContext   = _vm;
         _vm.LoginSucceeded += OpenDashboard;
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        WindowMaximizeHelper.InstallHook(this);
     }
 
     private void OpenDashboard(string username)

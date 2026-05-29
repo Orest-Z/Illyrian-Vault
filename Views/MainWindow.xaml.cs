@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
+using IllyrianVault.Models;
 using IllyrianVault.Services;
 using IllyrianVault.ViewModels;
 using MahApps.Metro.IconPacks;
@@ -16,7 +17,8 @@ namespace IllyrianVault.Views;
 
 public partial class MainWindow : Window
 {
-    private readonly MainViewModel _vm;
+    private readonly MainViewModel  _vm;
+    private readonly IdleLockService _idleLock;
 
     // ── Win32 hit-test and maximize constants ────────────────────────────────────
     private const int WM_NCHITTEST     = 0x0084;
@@ -73,8 +75,14 @@ public partial class MainWindow : Window
         _vm = new MainViewModel(App.Database, App.Encryption, App.SessionKey, username);
         DataContext = _vm;
 
+        _idleLock = new IdleLockService(
+            () => _vm.LockCommand.Execute(null),
+            TimeSpan.FromMinutes(5));
+
         _vm.LockRequested          += OnLockRequested;
         _vm.NewEntryRequested      += OnNewEntryRequested;
+        _vm.ExportRequested        += OnExportRequested;
+        _vm.IdleTimeoutChanged     += t => _idleLock.SetTimeout(t);
         _vm.ConfirmDeleteRequested += () =>
             MessageBox.Show(
                 "Delete this entry? This action cannot be undone.",
@@ -112,9 +120,10 @@ public partial class MainWindow : Window
     {
         base.OnSourceInitialized(e);
         if (PresentationSource.FromVisual(this) is HwndSource src)
+        {
             src.AddHook(WndProc);
-        // Defer maximize to here so the WndProc hook is installed before the first
-        // WM_GETMINMAXINFO fires — prevents the bottom-right drift bug.
+            _idleLock.Start();
+        }
         WindowState = WindowState.Maximized;
     }
 
@@ -200,9 +209,40 @@ public partial class MainWindow : Window
     // ── Lock ──────────────────────────────────────────────────────────────────────
     private void OnLockRequested()
     {
+        _idleLock.Stop();
         var auth = new AuthWindow();
         auth.Show();
         Close();
+    }
+
+    // ── Export ────────────────────────────────────────────────────────────────────
+    private void OnExportRequested()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title      = "Export Vault",
+            Filter     = "CSV (*.csv)|*.csv|Encrypted JSON (*.ivjson)|*.ivjson",
+            FileName   = $"illyrian-vault-export-{DateTime.Now:yyyy-MM-dd}",
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        if (dialog.FilterIndex == 1)
+        {
+            var rows = _vm.AllEntries.Select(evm =>
+            {
+                var pw = evm.CurrentPayload is LoginPayload lp ? lp.Password : string.Empty;
+                return (evm.Model, pw);
+            });
+            ExportService.ExportCsv(rows, dialog.FileName);
+        }
+        else
+        {
+            ExportService.ExportEncryptedJson(
+                _vm.AllEntries.Select(e => e.Model), dialog.FileName, App.SessionKey, App.Encryption);
+        }
+
+        MessageBox.Show("Export saved successfully.", "Illyrian Vault",
+            MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     // ── Title bar ─────────────────────────────────────────────────────────────────

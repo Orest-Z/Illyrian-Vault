@@ -1540,6 +1540,36 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Idle auto-lock -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="AUTO-LOCK AFTER (MIN)"
+                                               Style="{StaticResource FieldLabel}"
+                                               VerticalAlignment="Center"/>
+                                    <ComboBox Grid.Column="1"
+                                              Style="{StaticResource SortComboBox}"
+                                              ItemsSource="{Binding IdleTimeoutOptions}"
+                                              SelectedItem="{Binding IdleTimeoutMinutes, Mode=TwoWay}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Export -->
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="EXPORT DATA"
+                                               Style="{StaticResource FieldLabel}"
+                                               Margin="0,0,0,14"/>
+                                    <Button Style="{StaticResource BtnSecondary}"
+                                            Content="Export Vault…"
+                                            Command="{Binding RequestExportCommand}"
+                                            Height="38"/>
+                                </StackPanel>
+                            </Border>
+
                             <!-- Version -->
                             <Border Style="{StaticResource Card}" Margin="0,0,0,14">
                                 <Grid>

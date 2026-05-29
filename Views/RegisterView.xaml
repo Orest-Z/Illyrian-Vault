@@ -146,22 +146,31 @@
                           IsChecked="{Binding IsKeySaved, Mode=TwoWay}"/>
             </StackPanel>
 
-            <!-- Step 3: Confirm -->
-            <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}"
-                        HorizontalAlignment="Center">
-                <TextBlock Text="{DynamicResource AlmostThere}"
+            <!-- Step 3: Summary -->
+            <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Your vault is ready."
+                           FontSize="{StaticResource FontSectionHead}"
+                           FontFamily="{StaticResource FontPrimary}"
                            Foreground="{DynamicResource BrushText}"
-                           FontFamily="{StaticResource FontPrimary}"
-                           FontSize="{StaticResource FontCardHead}"
                            FontWeight="SemiBold"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,12"/>
-                <TextBlock Text="{DynamicResource AlmostSub}"
-                           Foreground="{DynamicResource BrushTextSecondary}"
-                           FontFamily="{StaticResource FontPrimary}"
-                           FontSize="{StaticResource FontBody}"
-                           HorizontalAlignment="Center"
-                           TextWrapping="Wrap"/>
+                           Margin="0,0,0,16"/>
+                <StackPanel>
+                    <TextBlock Text="{Binding SummaryUsername,  StringFormat='Username:   {0}'}"
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               FontFamily="{StaticResource FontPrimary}"
+                               FontSize="{StaticResource FontBody}"
+                               Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding SummaryVaultPath, StringFormat='Vault path: {0}'}"
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               FontFamily="{StaticResource FontPrimary}"
+                               FontSize="{StaticResource FontBody}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding SummaryCreatedAt, StringFormat='Created:    {0}'}"
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               FontFamily="{StaticResource FontPrimary}"
+                               FontSize="{StaticResource FontBody}"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Error -->

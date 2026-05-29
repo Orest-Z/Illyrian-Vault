@@ -38,6 +38,10 @@ public partial class RegisterViewModel : BaseViewModel
     public bool   IsStep3    => CurrentStep == 3;
     public string StepLabel  => $"{CurrentStep} / 3";
 
+    public string SummaryUsername  => Username;
+    public string SummaryVaultPath => DatabaseService.GetDbPath(Username);
+    public string SummaryCreatedAt => DateTime.Now.ToString("MMMM dd, yyyy");
+
     // ── Step 1: Username + Passwords ──────────────────────────────────────────
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(NextCommand))]
@@ -177,7 +181,9 @@ public partial class RegisterViewModel : BaseViewModel
                 CreatedAt        = DateTime.UtcNow,
             };
 
-            App.SetSessionKey(key);
+            var sessionCopy = new byte[key.Length];
+            Buffer.BlockCopy(key, 0, sessionCopy, 0, key.Length);
+            App.SetSessionKey(sessionCopy);
             _db.SetProfile(Username);
             await _db.OpenAsync(key);
             CryptographicOperations.ZeroMemory(key);

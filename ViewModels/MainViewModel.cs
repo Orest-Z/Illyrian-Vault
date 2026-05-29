@@ -134,6 +134,8 @@ public partial class EntryViewModel : ObservableObject
 
     [ObservableProperty] private string _editTitle = string.Empty;
 
+    private CancellationTokenSource? _revealCts;
+
     // JSON snapshot of CurrentPayload captured on Edit() — used to revert on Cancel.
     private string _payloadCache = string.Empty;
 
@@ -230,8 +232,20 @@ public partial class EntryViewModel : ObservableObject
 
     // ── Display helpers ────────────────────────────────────────────────────────
 
-    partial void OnIsPasswordRevealedChanged(bool value) =>
+    partial void OnIsPasswordRevealedChanged(bool value)
+    {
         OnPropertyChanged(nameof(DisplayPassword));
+        _revealCts?.Cancel();
+        _revealCts?.Dispose();
+        _revealCts = null;
+        if (!value) return;
+        var cts = new CancellationTokenSource();
+        _revealCts = cts;
+        _ = Task.Delay(TimeSpan.FromSeconds(30), cts.Token).ContinueWith(_ =>
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() => IsPasswordRevealed = false);
+        }, TaskContinuationOptions.OnlyOnRanToCompletion);
+    }
 
     partial void OnIsFavoriteChanged(bool value)
     {
@@ -326,7 +340,8 @@ public partial class MainViewModel : BaseViewModel
 
     public event Action?      LockRequested;
     public event Action?      NewEntryRequested;
-    // Returns true when the user confirms deletion; MainWindow shows a MessageBox.
+    public event Action?      ExportRequested;
+    public event Action<TimeSpan>? IdleTimeoutChanged;
     public event Func<bool>?  ConfirmDeleteRequested;
 
     // ── Profile ────────────────────────────────────────────────────────────────
@@ -359,8 +374,19 @@ public partial class MainViewModel : BaseViewModel
     partial void OnCurrentLanguageChanged(string value) =>
         App.Localization.Apply(value == "SQ" ? AppLanguage.Sq : AppLanguage.En);
 
+    // ── Idle auto-lock ─────────────────────────────────────────────────────────
+    public IReadOnlyList<int> IdleTimeoutOptions { get; } = new[] { 1, 2, 5, 10, 15, 30 };
+
+    [ObservableProperty]
+    private int _idleTimeoutMinutes = 5;
+
+    partial void OnIdleTimeoutMinutesChanged(int value) =>
+        IdleTimeoutChanged?.Invoke(TimeSpan.FromMinutes(value));
+
     // ── Entry collections ──────────────────────────────────────────────────────
     private readonly ObservableCollection<EntryViewModel> _allEntries = [];
+
+    public IReadOnlyList<EntryViewModel> AllEntries => _allEntries;
 
     // The ListBox in the View binds to this filtered list.
     public ObservableCollection<EntryViewModel> FilteredEntries { get; } = [];
@@ -435,6 +461,9 @@ public partial class MainViewModel : BaseViewModel
     // ── Commands ───────────────────────────────────────────────────────────────
     [RelayCommand]
     private void RequestNewEntry() => NewEntryRequested?.Invoke();
+
+    [RelayCommand]
+    private void RequestExport() => ExportRequested?.Invoke();
 
     [RelayCommand]
     private async Task LoadEntriesAsync()

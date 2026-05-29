@@ -84,6 +84,9 @@ public partial class LoginViewModel : BaseViewModel
 
     public string VaultPath => DatabaseService.GetDbPath(Username);
 
+    public List<string> AvailableProfiles   { get; } = DatabaseService.ListProfiles();
+    public bool         HasMultipleProfiles => AvailableProfiles.Count > 1;
+
     public LoginViewModel(EncryptionService crypto, DatabaseService db)
     {
         _crypto = crypto;
@@ -93,14 +96,14 @@ public partial class LoginViewModel : BaseViewModel
 
     private void TryAutoFillUsername()
     {
-        var profiles = DatabaseService.ListProfiles();
-        if (profiles.Count == 1)
-            Username = profiles[0];
+        if (AvailableProfiles.Count >= 1)
+            Username = AvailableProfiles[0];
     }
 
-    // Reload lockout counters from vault.meta whenever the username field changes
-    // so the UI reflects the correct gate state without a round-trip through UnlockAsync.
-    partial void OnUsernameChanged(string value) => LoadLockoutState(value);
+    [RelayCommand]
+    private void SelectProfile(string username) => Username = username;
+
+    partial void OnUsernameChanged(string value) => _ = LoadLockoutStateAsync(value);
 
     // ── Unlock command ─────────────────────────────────────────────────────────
 
@@ -248,14 +251,14 @@ public partial class LoginViewModel : BaseViewModel
         catch { /* non-critical — in-memory state is authoritative for this session */ }
     }
 
-    private void LoadLockoutState(string username)
+    private async Task LoadLockoutStateAsync(string username)
     {
         if (string.IsNullOrEmpty(username)) return;
         var metaPath = DatabaseService.GetMetaPath(username);
         if (!File.Exists(metaPath)) return;
         try
         {
-            var lines = File.ReadAllLines(metaPath);
+            var lines = await File.ReadAllLinesAsync(metaPath);
             _consecutiveFailures = lines.Length > 4 && int.TryParse(lines[4], out int f)  ? f : 0;
             _lockedUntil         = lines.Length > 5 && long.TryParse(lines[5], out long t) && t > 0
                                    ? new DateTime(t, DateTimeKind.Utc)
