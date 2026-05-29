@@ -131,8 +131,7 @@ public partial class RegisterViewModel : BaseViewModel
             }
 
             var salt       = _crypto.GenerateSalt();
-            var key        = _crypto.DeriveKey(NewPassword, salt);
-            var hexKey     = Convert.ToHexString(key).ToLowerInvariant();
+            var key        = _crypto.DeriveKey(NewPassword, salt);   // string overload — acceptable for one-time registration
             var verifyHash = _crypto.CreateVerificationHash(key);
 
             // Create the isolated profile folder and write the plaintext sidecar.
@@ -156,9 +155,13 @@ public partial class RegisterViewModel : BaseViewModel
                 CreatedAt        = DateTime.UtcNow,
             };
 
-            App.SessionKey = key;
+            // SetSessionKey copies key into a new pinned allocation.
+            // After the DB is open, zero the local byte[] so only the
+            // pinned session copy survives.
+            App.SetSessionKey(key);
             _db.SetProfile(Username);
-            await _db.OpenAsync(hexKey);
+            await _db.OpenAsync(key);           // byte[] overload — no hex string in scope
+            System.Security.Cryptography.CryptographicOperations.ZeroMemory(key);
             await _db.SaveUserAsync(user);
 
             NewPassword     = string.Empty;

@@ -12,9 +12,30 @@ public partial class App : Application
     public static ThemeService        Theme        { get; } = new();
     public static LocalizationService Localization { get; } = new();
 
-    // Raw 32-byte AES key held in memory for the duration of the session.
-    // Set by Login/Register before opening MainWindow; cleared on lock.
-    public static byte[] SessionKey { get; set; } = [];
+    // ── Session key management ─────────────────────────────────────────────────
+    // The 32-byte AES session key is stored in a GC-Pinned byte[] so the GC
+    // cannot move (and therefore duplicate) it.  ClearSessionKey() uses
+    // CryptographicOperations.ZeroMemory — a volatile write that the JIT cannot
+    // elide — before releasing the pin.  Never assign to SessionKey directly;
+    // always use SetSessionKey / ClearSessionKey.
+
+    private static byte[]              _sessionKey    = Array.Empty<byte>();
+    private static System.Runtime.InteropServices.GCHandle _sessionKeyPin;
+
+    public static byte[] SessionKey => _sessionKey;
+
+    public static void SetSessionKey(byte[] key)
+    {
+        // Zero the old key before replacing it.
+        Services.SecureMemory.ZeroSessionKey(ref _sessionKey, ref _sessionKeyPin);
+        _sessionKey    = key;
+        _sessionKeyPin = System.Runtime.InteropServices.GCHandle.Alloc(
+                             _sessionKey,
+                             System.Runtime.InteropServices.GCHandleType.Pinned);
+    }
+
+    public static void ClearSessionKey() =>
+        Services.SecureMemory.ZeroSessionKey(ref _sessionKey, ref _sessionKeyPin);
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -42,6 +63,8 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        ClearSessionKey();
+        ClipboardGuard.ClearNow();
         await Database.DisposeAsync();
         base.OnExit(e);
     }

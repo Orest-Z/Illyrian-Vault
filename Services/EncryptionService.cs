@@ -23,21 +23,30 @@ public sealed class EncryptionService
 
     // ── Key derivation (PBKDF2-SHA256) ────────────────────────────────────────
 
-    public byte[] DeriveKey(string masterPassword, byte[] salt) =>
+    /// <summary>
+    /// Span-based overload: password bytes come from a PinnedBuffer extracted
+    /// from a SecureString — no System.String is ever materialised.
+    /// Preferred code path for all login operations.
+    /// </summary>
+    public byte[] DeriveKey(ReadOnlySpan<byte> passwordBytes, byte[] salt) =>
         Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(masterPassword),
+            passwordBytes,
             salt,
             Pbkdf2Iterations,
             HashAlgorithmName.SHA256,
             KeyBytes);
 
     /// <summary>
-    /// Returns the key as a lowercase hex string for SQLCipher:
-    ///   PRAGMA key = "x'hexstring'"
-    /// This bypasses SQLCipher's own internal PBKDF2 and uses our 256-bit key directly.
+    /// Legacy string overload kept for RegisterViewModel (which shows a
+    /// live strength-score on every keystroke and requires string access).
+    /// Do NOT use this path in new security-critical code.
     /// </summary>
-    public string DeriveHexKey(string masterPassword, byte[] salt) =>
-        Convert.ToHexString(DeriveKey(masterPassword, salt)).ToLowerInvariant();
+    public byte[] DeriveKey(string masterPassword, byte[] salt)
+    {
+        byte[] pwBytes = Encoding.UTF8.GetBytes(masterPassword);
+        try   { return DeriveKey((ReadOnlySpan<byte>)pwBytes, salt); }
+        finally { CryptographicOperations.ZeroMemory(pwBytes); }
+    }
 
     // ── Password verification ──────────────────────────────────────────────────
 
@@ -45,20 +54,40 @@ public sealed class EncryptionService
     /// Token = SHA-256(derivedKey ‖ "ILLYRIA_VERIFY").
     /// Stored alongside the salt so we can check the password without opening the DB.
     /// </summary>
-    public byte[] CreateVerificationHash(byte[] derivedKey)
+    public byte[] CreateVerificationHash(ReadOnlySpan<byte> derivedKey)
     {
-        var suffix  = "ILLYRIA_VERIFY"u8.ToArray();
-        var payload = new byte[derivedKey.Length + suffix.Length];
-        derivedKey.CopyTo(payload, 0);
-        suffix.CopyTo(payload, derivedKey.Length);
+        ReadOnlySpan<byte> suffix  = "ILLYRIA_VERIFY"u8;
+        byte[]             payload = new byte[derivedKey.Length + suffix.Length];
+        derivedKey.CopyTo(payload);
+        suffix.CopyTo(payload.AsSpan(derivedKey.Length));
         return SHA256.HashData(payload);
     }
 
+    /// <summary>
+    /// Span-based verification — the derived key is pinned by caller and never
+    /// surfaces as a plain string.  Uses a fixed-time comparison to prevent
+    /// timing-oracle attacks on the verification hash.
+    /// </summary>
+    public bool VerifyPassword(ReadOnlySpan<byte> passwordBytes, byte[] salt, byte[] storedHash)
+    {
+        byte[] key = DeriveKey(passwordBytes, salt);
+        try
+        {
+            byte[] candidate = CreateVerificationHash(key);
+            return CryptographicOperations.FixedTimeEquals(candidate, storedHash);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+        }
+    }
+
+    /// <summary>Legacy string overload — delegates to span-based path.</summary>
     public bool VerifyPassword(string masterPassword, byte[] salt, byte[] storedHash)
     {
-        var key       = DeriveKey(masterPassword, salt);
-        var candidate = CreateVerificationHash(key);
-        return CryptographicOperations.FixedTimeEquals(candidate, storedHash);
+        byte[] pwBytes = Encoding.UTF8.GetBytes(masterPassword);
+        try   { return VerifyPassword((ReadOnlySpan<byte>)pwBytes, salt, storedHash); }
+        finally { CryptographicOperations.ZeroMemory(pwBytes); }
     }
 
     // ── Field-level AES-256-GCM ────────────────────────────────────────────────

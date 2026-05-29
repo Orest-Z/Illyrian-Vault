@@ -168,8 +168,8 @@
                        Style="{StaticResource FieldLabel}"
                        Margin="0,0,0,8"/>
             <PasswordBox Style="{StaticResource PasswordInput}"
-                         helpers:PasswordBoxHelper.BindPassword="True"
-                         helpers:PasswordBoxHelper.BoundPassword="{Binding MasterPassword, Mode=TwoWay}"/>
+                         helpers:PasswordBoxHelper.BindSecurePassword="True"
+                         helpers:PasswordBoxHelper.SecurePassword="{Binding SecurePassword, Mode=TwoWay}"/>
 
             <!-- Error message -->
             <TextBlock Text="{Binding ErrorMessage}"
@@ -179,6 +179,15 @@
                        TextWrapping="Wrap"
                        Margin="0,10,0,0"
                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
+
+            <!-- Backoff / lockout status message -->
+            <TextBlock Text="{Binding LockoutMessage}"
+                       Foreground="{DynamicResource BrushWarning}"
+                       FontFamily="{StaticResource FontPrimary}"
+                       FontSize="{StaticResource FontSmall}"
+                       TextWrapping="Wrap"
+                       Margin="0,10,0,0"
+                       Visibility="{Binding HasLockoutMessage, Converter={StaticResource BoolToVis}}"/>
 
             <!-- Unlock button — IsDefault makes Enter key trigger it from anywhere in the form -->
             <Button Content="{DynamicResource UnlockButton}"
@@ -198,11 +207,8 @@
                     Command="{Binding NavigateRegisterCommand}"/>
 
             <!-- Exit application -->
-            <Button Margin="0,10,0,0"
-                    Height="36"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Cursor="Hand"
+            <Button Style="{StaticResource BtnSecondary}"
+                    Margin="0,10,0,0"
                     Command="{Binding ExitCommand}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <iconPacks:PackIconMaterial Kind="ExitToApp" Width="14" Height="14"

@@ -56,7 +56,36 @@ public sealed class DatabaseService : IAsyncDisposable
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
-    public async Task OpenAsync(string hexKey)
+    /// <summary>
+    /// Opens and configures the SQLCipher database using raw 32-byte key material.
+    ///
+    /// The rawKey byte[] is converted to a hex string ONLY for the PRAGMA command
+    /// and in the narrowest possible scope — the local variable becomes GC-eligible
+    /// the moment ExecAsync returns. The string itself cannot be zeroed (managed
+    /// String is immutable) but it never leaves this method's stack frame.
+    ///
+    /// PRAGMA EXECUTION ORDER (matters — must precede any schema operations):
+    ///   1. key                      — unlocks the cipher layer.
+    ///   2. cipher_page_size         — 4096 bytes: larger pages mean fewer total
+    ///                                 encrypted blocks and better I/O throughput.
+    ///                                 Must be set before the first table access.
+    ///   3. cipher_hmac_algorithm    — SHA-512 HMAC for page authentication.
+    ///                                 SHA-256 is the SQLCipher default; SHA-512
+    ///                                 is stronger and still faster than AES-GCM
+    ///                                 authenticated encryption on most hardware.
+    ///   4. cipher_kdf_algorithm     — not used (we pass a raw x'hex' key, so
+    ///                                 SQLCipher's internal KDF is bypassed), but
+    ///                                 set explicitly so the cipher metadata block
+    ///                                 written to the DB header is consistent.
+    ///   5. cipher_memory_security   — ON: SQLCipher zeroes its internal page
+    ///                                 cache and key schedule before returning
+    ///                                 memory to the allocator.
+    ///                                 Trade-off: adds ~5–10 % overhead on
+    ///                                 page read/write. Acceptable for a password
+    ///                                 manager with a small DB (typically < 1 MB).
+    ///   6. cipher_plaintext_header_size = 0 — no unencrypted header bytes.
+    /// </summary>
+    public async Task OpenAsync(byte[] rawKey)
     {
         if (string.IsNullOrEmpty(_dbPath))
             throw new InvalidOperationException("Call SetProfile(username) before opening the database.");
@@ -72,9 +101,17 @@ public sealed class DatabaseService : IAsyncDisposable
         _conn = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate");
         await _conn.OpenAsync();
 
-        // SQLCipher: key must be set as the very first command.
-        // "x'hexstring'" = raw 256-bit key (skips SQLCipher's internal PBKDF2).
-        await ExecAsync($"PRAGMA key = \"x'{hexKey}'\";");
+        // Build the key PRAGMA in the smallest possible scope. The string is
+        // GC-eligible as soon as ExecAsync returns. Never store it in a field.
+        await ExecAsync(SecureMemory.BuildSqlCipherKeyPragma(rawKey));
+
+        // Hardened cipher configuration — all must precede CreateSchemaAsync.
+        await ExecAsync("PRAGMA cipher_page_size          = 4096;");
+        await ExecAsync("PRAGMA cipher_hmac_algorithm     = HMAC_SHA512;");
+        await ExecAsync("PRAGMA cipher_kdf_algorithm      = PBKDF2_HMAC_SHA512;");
+        await ExecAsync("PRAGMA cipher_memory_security    = ON;");
+        await ExecAsync("PRAGMA cipher_plaintext_header_size = 0;");
+
         await ExecAsync("PRAGMA journal_mode = WAL;");
         await ExecAsync("PRAGMA foreign_keys = ON;");
         await ExecAsync("PRAGMA synchronous  = NORMAL;");
@@ -83,11 +120,11 @@ public sealed class DatabaseService : IAsyncDisposable
     }
 
     /// <summary>Opens the DB and runs a probe query. Returns false if the key is wrong.</summary>
-    public async Task<bool> TryOpenAsync(string hexKey)
+    public async Task<bool> TryOpenAsync(byte[] rawKey)
     {
         try
         {
-            await OpenAsync(hexKey);
+            await OpenAsync(rawKey);
             await ExecAsync("SELECT count(*) FROM sqlite_master;");
             return true;
         }

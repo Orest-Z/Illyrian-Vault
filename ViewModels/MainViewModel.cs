@@ -440,7 +440,7 @@ public partial class MainViewModel : BaseViewModel
             _                  => string.Empty,
         };
         if (!string.IsNullOrEmpty(text))
-            System.Windows.Clipboard.SetText(text);
+            ClipboardGuard.SetAndScheduleWipe(text);
     }
 
     [RelayCommand]
@@ -448,7 +448,7 @@ public partial class MainViewModel : BaseViewModel
     {
         if (SelectedEntry?.CurrentPayload is not LoginPayload lp) return;
         if (!string.IsNullOrEmpty(lp.Password))
-            System.Windows.Clipboard.SetText(lp.Password);
+            ClipboardGuard.SetAndScheduleWipe(lp.Password);
     }
 
     [RelayCommand]
@@ -473,7 +473,11 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LockAsync()
     {
-        App.SessionKey = [];
+        // Zero the session key in memory BEFORE closing the DB connection.
+        // This ensures no window exists where the DB is closed but the key
+        // still lives in a GC-scannable byte[] on the managed heap.
+        App.ClearSessionKey();
+        ClipboardGuard.ClearNow();
         await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
@@ -481,7 +485,8 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LogoutAsync()
     {
-        App.SessionKey = [];
+        App.ClearSessionKey();
+        ClipboardGuard.ClearNow();
         await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
