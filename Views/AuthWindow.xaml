@@ -5,7 +5,7 @@
         xmlns:vm="clr-namespace:IllyrianVault.ViewModels"
         xmlns:views="clr-namespace:IllyrianVault.Views"
         Title="Illyrian Vault"
-        Icon="/IllyriaVault.png"
+        Icon="/IllyrianVault.png"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
