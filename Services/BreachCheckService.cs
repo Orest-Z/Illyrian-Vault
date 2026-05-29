@@ -36,6 +36,7 @@ public static class BreachCheckService
 
         var hashBytes = SHA1.HashData(Encoding.UTF8.GetBytes(plaintextPassword));
         var hash      = Convert.ToHexString(hashBytes);
+        CryptographicOperations.ZeroMemory(hashBytes);
         var prefix    = hash[..5];
         var suffix    = hash[5..];
 
