@@ -73,8 +73,14 @@ public partial class MainWindow : Window
         _vm = new MainViewModel(App.Database, App.Encryption, App.SessionKey, username);
         DataContext = _vm;
 
-        _vm.LockRequested     += OnLockRequested;
-        _vm.NewEntryRequested += OnNewEntryRequested;
+        _vm.LockRequested          += OnLockRequested;
+        _vm.NewEntryRequested      += OnNewEntryRequested;
+        _vm.ConfirmDeleteRequested += () =>
+            MessageBox.Show(
+                "Delete this entry? This action cannot be undone.",
+                "Illyrian Vault — Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.Yes;
 
         Loaded += async (_, _) =>
         {

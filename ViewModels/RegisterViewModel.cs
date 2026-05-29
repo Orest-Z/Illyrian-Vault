@@ -4,10 +4,13 @@
  * Unauthorized copying of this file is strictly prohibited.
  * ======================================================= */
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IllyrianVault.Models;
 using IllyrianVault.Services;
+using Microsoft.Win32;
 
 namespace IllyrianVault.ViewModels;
 
@@ -72,7 +75,15 @@ public partial class RegisterViewModel : BaseViewModel
     [RelayCommand]
     private void DownloadKey()
     {
-        // In Phase 2 (Views), this will open a SaveFileDialog.
+        var dialog = new SaveFileDialog
+        {
+            Title      = "Save Recovery Key",
+            FileName   = "illyrian-vault-recovery-key.txt",
+            DefaultExt = ".txt",
+            Filter     = "Text Files (*.txt)|*.txt",
+        };
+        if (dialog.ShowDialog() != true) return;
+        File.WriteAllText(dialog.FileName, RecoveryKey);
         IsKeySaved = true;
     }
 
@@ -94,7 +105,10 @@ public partial class RegisterViewModel : BaseViewModel
 
     private bool CanGoNext() => CurrentStep switch
     {
-        1 => !string.IsNullOrWhiteSpace(Username) && NewPassword.Length >= 8 && NewPassword == ConfirmPassword,
+        1 => !string.IsNullOrWhiteSpace(Username)
+             && NewPassword.Length >= 8
+             && NewPassword == ConfirmPassword
+             && StrengthScore >= 3,
         2 => IsKeySaved,
         _ => true,
     };
@@ -136,11 +150,9 @@ public partial class RegisterViewModel : BaseViewModel
             }
 
             var salt       = _crypto.GenerateSalt();
-            var key        = _crypto.DeriveKey(NewPassword, salt);   // string overload — acceptable for one-time registration
+            var key        = _crypto.DeriveKeyV2(NewPassword, salt);
             var verifyHash = _crypto.CreateVerificationHash(key);
 
-            // Create the isolated profile folder and write the plaintext sidecar.
-            // Login reads the sidecar to verify the password before opening the encrypted DB.
             var profileDir = DatabaseService.GetProfileDir(Username);
             var metaPath   = DatabaseService.GetMetaPath(Username);
             Directory.CreateDirectory(profileDir);
@@ -148,6 +160,9 @@ public partial class RegisterViewModel : BaseViewModel
                 Convert.ToBase64String(salt),
                 Convert.ToBase64String(verifyHash),
                 Username,
+                "v2",   // SHA-512 PBKDF2; read by LoginViewModel to choose DeriveKeyV2
+                "0",    // consecutive failures (initial)
+                "0",    // lockout until ticks (initial)
             ]);
 
             var user = new VaultUser
@@ -156,17 +171,16 @@ public partial class RegisterViewModel : BaseViewModel
                 DisplayName      = "Local Profile",
                 PasswordSalt     = salt,
                 VerificationHash = verifyHash,
-                RecoveryKeyHash  = RecoveryKey,
+                // Store SHA-256 hash of the recovery key, never the key itself.
+                RecoveryKeyHash  = Convert.ToBase64String(
+                                       SHA256.HashData(Encoding.UTF8.GetBytes(RecoveryKey))),
                 CreatedAt        = DateTime.UtcNow,
             };
 
-            // SetSessionKey copies key into a new pinned allocation.
-            // After the DB is open, zero the local byte[] so only the
-            // pinned session copy survives.
             App.SetSessionKey(key);
             _db.SetProfile(Username);
-            await _db.OpenAsync(key);           // byte[] overload — no hex string in scope
-            System.Security.Cryptography.CryptographicOperations.ZeroMemory(key);
+            await _db.OpenAsync(key);
+            CryptographicOperations.ZeroMemory(key);
             await _db.SaveUserAsync(user);
 
             NewPassword     = string.Empty;

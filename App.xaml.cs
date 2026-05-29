@@ -49,22 +49,31 @@ public partial class App : Application
         // SQLCipher's native provider must be registered before the first connection.
         SQLitePCL.Batteries_V2.Init();
 
-        // Global unhandled-exception handler for UI thread crashes.
         DispatcherUnhandledException += (_, ex) =>
         {
-            MessageBox.Show(
-                ex.Exception.Message,
-                "Illyrian Vault — Unexpected Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            LogOrShow(ex.Exception?.ToString());
             ex.Handled = true;
         };
 
-        // AuthWindow decides internally whether to show Login or Register
-        // based on whether vault.db + vault.meta already exist.
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
+            LogOrShow(ex.ExceptionObject?.ToString());
+
+        TaskScheduler.UnobservedTaskException += (_, ex) =>
+        {
+            ex.SetObserved();
+            LogOrShow(ex.Exception?.Message);
+        };
+
         var auth = new Views.AuthWindow();
         auth.Show();
     }
+
+    private static void LogOrShow(string? message) =>
+        MessageBox.Show(
+            message ?? "An unknown error occurred.",
+            "Illyrian Vault — Unexpected Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
 
     protected override async void OnExit(ExitEventArgs e)
     {

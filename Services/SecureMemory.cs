@@ -179,15 +179,14 @@ public static class SecureMemory
     // ── Session key storage ───────────────────────────────────────────────────
 
     /// <summary>
-    /// Copies the derived key into a new pinned allocation owned by the App.
-    /// The source PinnedBuffer is NOT disposed here — caller decides when to zero it.
+    /// Copies the derived key bytes into a fresh unpinned byte[].
+    /// App.SetSessionKey is the SOLE site that pins this array — no double-pin.
     /// </summary>
-    public static (byte[] Key, GCHandle Pin) AllocateSessionKey(PinnedBuffer source)
+    public static byte[] AllocateSessionKey(PinnedBuffer source)
     {
-        byte[]   key = new byte[source.Length];
-        GCHandle pin = GCHandle.Alloc(key, GCHandleType.Pinned);
-        source.Span.CopyTo(key);
-        return (key, pin);
+        byte[] copy = new byte[source.Length];
+        source.Span.CopyTo(copy);
+        return copy;
     }
 
     /// <summary>

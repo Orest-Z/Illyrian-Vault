@@ -4,6 +4,7 @@
  * Unauthorized copying of this file is strictly prohibited.
  * ======================================================= */
 using System.Collections.ObjectModel;
+using System.Security.Cryptography;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,15 +16,44 @@ namespace IllyrianVault.ViewModels;
 public enum BreachStatus  { NotChecked, Checking, Safe, Breached, Error }
 public enum WorkspaceState { Vault, Settings, Generator }
 
-public class PasswordHistoryItemVm
+public partial class PasswordHistoryItemVm : ObservableObject
 {
-    public string Plaintext { get; }
+    private readonly string            _encryptedPassword;
+    private readonly EncryptionService _crypto;
+    private readonly byte[]            _key;
+
     public string DateLabel { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotRevealed))]
+    private bool _isRevealed;
+
+    public bool IsNotRevealed => !IsRevealed;
+
+    [ObservableProperty]
+    private string _plaintext = "••••••••";
 
     public PasswordHistoryItemVm(string encryptedPassword, DateTime createdAt, EncryptionService crypto, byte[] key)
     {
-        Plaintext = crypto.Decrypt(encryptedPassword, key);
-        DateLabel = createdAt.ToLocalTime().ToString("MMM dd, yyyy  HH:mm");
+        _encryptedPassword = encryptedPassword;
+        _crypto            = crypto;
+        _key               = key;
+        DateLabel          = createdAt.ToLocalTime().ToString("MMM dd, yyyy  HH:mm");
+    }
+
+    [RelayCommand]
+    private Task RevealAsync()
+    {
+        Plaintext  = _crypto.Decrypt(_encryptedPassword, _key);
+        IsRevealed = true;
+        return Task.CompletedTask;
+    }
+
+    [RelayCommand]
+    private void Hide()
+    {
+        Plaintext  = "••••••••";
+        IsRevealed = false;
     }
 }
 
@@ -294,11 +324,10 @@ public partial class MainViewModel : BaseViewModel
     private readonly EncryptionService _crypto;
     private readonly byte[]            _sessionKey;
 
-    // Fired when the user locks the vault — MainWindow subscribes and shows AuthWindow.
-    public event Action? LockRequested;
-
-    // Fired when the user clicks New Entry — MainWindow opens AddEntryWindow.
-    public event Action? NewEntryRequested;
+    public event Action?      LockRequested;
+    public event Action?      NewEntryRequested;
+    // Returns true when the user confirms deletion; MainWindow shows a MessageBox.
+    public event Func<bool>?  ConfirmDeleteRequested;
 
     // ── Profile ────────────────────────────────────────────────────────────────
     public string ProfileUsername { get; }
@@ -442,6 +471,7 @@ public partial class MainViewModel : BaseViewModel
     private async Task DeleteEntryAsync()
     {
         if (SelectedEntry is null) return;
+        if (ConfirmDeleteRequested?.Invoke() != true) return;
         await _db.DeleteEntryAsync(SelectedEntry.Model.Id);
         _allEntries.Remove(SelectedEntry);
         SelectedEntry = FilteredEntries.FirstOrDefault();
@@ -494,9 +524,11 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LockAsync()
     {
-        // Zero the session key in memory BEFORE closing the DB connection.
-        // This ensures no window exists where the DB is closed but the key
-        // still lives in a GC-scannable byte[] on the managed heap.
+        if (SelectedEntry is not null)
+        {
+            SelectedEntry.History.Clear();
+            SelectedEntry.ShowHistory = false;
+        }
         App.ClearSessionKey();
         ClipboardGuard.ClearNow();
         await App.Database.DisposeAsync();
@@ -506,6 +538,11 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LogoutAsync()
     {
+        if (SelectedEntry is not null)
+        {
+            SelectedEntry.History.Clear();
+            SelectedEntry.ShowHistory = false;
+        }
         App.ClearSessionKey();
         ClipboardGuard.ClearNow();
         await App.Database.DisposeAsync();

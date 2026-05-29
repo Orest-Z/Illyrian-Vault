@@ -14,6 +14,14 @@ public static class BreachCheckService
 {
     private const string HibpRangeBase = "https://api.pwnedpasswords.com/range/";
 
+    private static readonly HttpClient _client;
+
+    static BreachCheckService()
+    {
+        _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        _client.DefaultRequestHeaders.UserAgent.ParseAdd("IllyrianVault/1.0");
+    }
+
     public record Result(bool IsBreached, bool IsNetworkUnavailable, int BreachCount, string Message);
 
     /// <summary>
@@ -26,18 +34,12 @@ public static class BreachCheckService
             return new Result(false, true, 0,
                 "Cannot check for breaches. Please connect to the internet and try again.");
 
-        // SHA-1 of the plaintext → 40-char uppercase hex string.
         var hashBytes = SHA1.HashData(Encoding.UTF8.GetBytes(plaintextPassword));
-        var hash      = Convert.ToHexString(hashBytes);   // already uppercase
-        var prefix    = hash[..5];                         // sent to HIBP
-        var suffix    = hash[5..];                         // stays local, used only for comparison
+        var hash      = Convert.ToHexString(hashBytes);
+        var prefix    = hash[..5];
+        var suffix    = hash[5..];
 
-        string body;
-        using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) })
-        {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("IllyrianVault/1.0");
-            body = await client.GetStringAsync(HibpRangeBase + prefix);
-        }
+        string body = await _client.GetStringAsync(HibpRangeBase + prefix);
 
         // Response format per line: SUFFIX:COUNT  (suffix is 35 uppercase hex chars)
         foreach (var rawLine in body.Split('\n', StringSplitOptions.RemoveEmptyEntries))

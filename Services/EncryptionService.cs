@@ -110,6 +110,7 @@ public sealed class EncryptionService
 
         using var aes = new AesGcm(key, GcmTagBytes);
         aes.Encrypt(nonce, plaintextBytes, ciphertext, tag);
+        CryptographicOperations.ZeroMemory(plaintextBytes);
 
         var packed = new byte[GcmNonceBytes + GcmTagBytes + ciphertext.Length];
         nonce.CopyTo(packed, 0);
@@ -128,7 +129,22 @@ public sealed class EncryptionService
 
         using var aes = new AesGcm(key, GcmTagBytes);
         aes.Decrypt(nonce, ciphertext, tag, plaintext);
-        return Encoding.UTF8.GetString(plaintext);
+        var result = Encoding.UTF8.GetString(plaintext);
+        CryptographicOperations.ZeroMemory(plaintext);
+        return result;
+    }
+
+    /// <summary>SHA-512 PBKDF2 variant for v2 vaults created by RegisterViewModel.</summary>
+    public byte[] DeriveKeyV2(string masterPassword, byte[] salt)
+    {
+        byte[] pwBytes = Encoding.UTF8.GetBytes(masterPassword);
+        try
+        {
+            return Rfc2898DeriveBytes.Pbkdf2(
+                (ReadOnlySpan<byte>)pwBytes, salt,
+                Pbkdf2Iterations, HashAlgorithmName.SHA512, KeyBytes);
+        }
+        finally { CryptographicOperations.ZeroMemory(pwBytes); }
     }
 
     // ── Recovery key ──────────────────────────────────────────────────────────

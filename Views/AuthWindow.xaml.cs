@@ -3,55 +3,24 @@
  * Illyrian Vault - Local & Encrypted Password Manager
  * Unauthorized copying of this file is strictly prohibited.
  * ======================================================= */
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using IllyrianVault.Services;
 using IllyrianVault.ViewModels;
 using MahApps.Metro.IconPacks;
 
 namespace IllyrianVault.Views;
 
-public partial class AuthWindow : Window, INotifyPropertyChanged
+public partial class AuthWindow : Window
 {
-    private object? _currentViewModel;
-
-    public object? CurrentViewModel
-    {
-        get => _currentViewModel;
-        private set { _currentViewModel = value; PropertyChanged?.Invoke(this, new(nameof(CurrentViewModel))); }
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
+    private readonly AuthViewModel _vm;
 
     public AuthWindow()
     {
         InitializeComponent();
-        DataContext = this;
-        if (DatabaseService.AnyProfileExists())
-            ShowLogin();
-        else
-            ShowRegister();
+        _vm = new AuthViewModel(App.Encryption, App.Database);
+        DataContext   = _vm;
+        _vm.LoginSucceeded += OpenDashboard;
     }
-
-    private void ShowLogin()
-    {
-        var vm = new LoginViewModel(App.Encryption, App.Database);
-        vm.LoginSucceeded     += OnLoginSucceeded;
-        vm.NavigateToRegister += ShowRegister;
-        CurrentViewModel = vm;
-    }
-
-    private void ShowRegister()
-    {
-        var vm = new RegisterViewModel(App.Encryption, App.Database);
-        vm.VaultCreated    += OnVaultCreated;
-        vm.NavigateToLogin += ShowLogin;
-        CurrentViewModel = vm;
-    }
-
-    private void OnLoginSucceeded(string username) => OpenDashboard(username);
-    private void OnVaultCreated(string username)   => OpenDashboard(username);
 
     private void OpenDashboard(string username)
     {

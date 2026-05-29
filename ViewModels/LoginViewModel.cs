@@ -4,8 +4,8 @@
  * Unauthorized copying of this file is strictly prohibited.
  * ======================================================= */
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Cryptography;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IllyrianVault.Services;
@@ -98,6 +98,10 @@ public partial class LoginViewModel : BaseViewModel
             Username = profiles[0];
     }
 
+    // Reload lockout counters from vault.meta whenever the username field changes
+    // so the UI reflects the correct gate state without a round-trip through UnlockAsync.
+    partial void OnUsernameChanged(string value) => LoadLockoutState(value);
+
     // ── Unlock command ─────────────────────────────────────────────────────────
 
     [RelayCommand(CanExecute = nameof(CanUnlock))]
@@ -134,7 +138,7 @@ public partial class LoginViewModel : BaseViewModel
         {
             if (!DatabaseService.ProfileExists(Username))
             {
-                RecordFailure();
+                await RecordFailureAsync();
                 ErrorMessage = "No vault found for that username.";
                 return;
             }
@@ -142,7 +146,7 @@ public partial class LoginViewModel : BaseViewModel
             var metaPath = DatabaseService.GetMetaPath(Username);
             if (!File.Exists(metaPath))
             {
-                RecordFailure();
+                await RecordFailureAsync();
                 ErrorMessage = "Vault data is missing or corrupted.";
                 return;
             }
@@ -150,15 +154,18 @@ public partial class LoginViewModel : BaseViewModel
             string[] lines = await File.ReadAllLinesAsync(metaPath);
             if (lines.Length < 2)
             {
-                RecordFailure();
+                await RecordFailureAsync();
                 ErrorMessage = "Vault data is missing or corrupted.";
                 return;
             }
 
-            byte[] salt      = Convert.FromBase64String(lines[0]);
+            byte[] salt       = Convert.FromBase64String(lines[0]);
             byte[] storedHash = Convert.FromBase64String(lines[1]);
 
-            // ── Extract password bytes from SecureString (never a System.String) ──
+            // Line 3 carries the vault format version; any unrecognised tag falls
+            // back to v1 (SHA-256 PBKDF2) for backward compatibility.
+            string versionTag = lines.Length > 3 ? lines[3].Trim() : "v1";
+
             if (_securePassword is null || _securePassword.Length == 0)
             {
                 ErrorMessage = "Please enter your master password.";
@@ -167,44 +174,37 @@ public partial class LoginViewModel : BaseViewModel
 
             using PinnedBuffer pwdBuffer = SecureMemory.PinFromSecureString(_securePassword);
 
-            // ── Verify password BEFORE deriving the DB key ─────────────────────
-            // This reads the vault.meta sidecar (no DB I/O) and is fast enough
-            // (~400 ms for 600 k iterations) to serve as the primary gate.
-            if (!_crypto.VerifyPassword(pwdBuffer.RoSpan, salt, storedHash))
+            // Derive the key once and reuse it for both verification and DB open,
+            // avoiding a second 600 k-iteration PBKDF2 call.
+            using PinnedBuffer keyBuffer = versionTag == "v2"
+                ? SecureMemory.DeriveKeyV2(pwdBuffer.RoSpan, salt)
+                : SecureMemory.DeriveKey(pwdBuffer.RoSpan, salt);
+
+            byte[] candidate = _crypto.CreateVerificationHash(keyBuffer.RoSpan);
+            if (!CryptographicOperations.FixedTimeEquals(candidate, storedHash))
             {
-                RecordFailure();
+                await RecordFailureAsync();
                 ErrorMessage = BuildFailureMessage();
                 return;
             }
 
-            // ── Derive the 32-byte SQLCipher key ──────────────────────────────
-            using PinnedBuffer keyBuffer = SecureMemory.DeriveKey(pwdBuffer.RoSpan, salt);
-            // pwdBuffer is still alive here — Dispose() is deferred to the
-            // end of the using block, so RoSpan remains valid.
-
             _db.SetProfile(Username);
             bool opened = await _db.TryOpenAsync(keyBuffer.Span.ToArray());
-            // ToArray() creates a temporary byte[] copy for the async call.
-            // keyBuffer.Dispose() zeros the PinnedBuffer's bytes at end of using.
 
             if (!opened)
             {
-                RecordFailure();
+                await RecordFailureAsync();
                 ErrorMessage = "Could not unlock the vault. The database may be corrupted.";
                 return;
             }
 
-            // ── Commit key to session store ────────────────────────────────────
-            // AllocateSessionKey copies into a NEW pinned allocation so keyBuffer
-            // can be zeroed independently when its using block exits.
-            var (sessionKey, _) = SecureMemory.AllocateSessionKey(keyBuffer);
-            App.SetSessionKey(sessionKey);
+            // AllocateSessionKey copies bytes; App.SetSessionKey is the sole pin site.
+            App.SetSessionKey(SecureMemory.AllocateSessionKey(keyBuffer));
 
-            // ── Success: zero failure counter, clear secure password ───────────
             _consecutiveFailures = 0;
             _lockedUntil         = DateTime.MinValue;
+            await PersistLockoutStateAsync();
 
-            // Dispose and null out the SecureString — its kernel buffer is zeroed.
             var old = _securePassword;
             _securePassword = null;
             old?.Dispose();
@@ -224,11 +224,44 @@ public partial class LoginViewModel : BaseViewModel
 
     // ── Backoff helpers ────────────────────────────────────────────────────────
 
-    private void RecordFailure()
+    private async Task RecordFailureAsync()
     {
         int newCount = Interlocked.Increment(ref _consecutiveFailures);
         if (newCount >= HardLockoutThreshold)
             _lockedUntil = DateTime.UtcNow.AddSeconds(HardLockoutSeconds);
+        await PersistLockoutStateAsync();
+    }
+
+    private async Task PersistLockoutStateAsync()
+    {
+        var metaPath = DatabaseService.GetMetaPath(Username);
+        if (!File.Exists(metaPath)) return;
+        try
+        {
+            var lines = (await File.ReadAllLinesAsync(metaPath)).ToList();
+            if (lines.Count == 3) lines.Add("v1"); // back-fill version tag for old vaults
+            while (lines.Count < 6)  lines.Add("0");
+            lines[4] = _consecutiveFailures.ToString();
+            lines[5] = _lockedUntil.Ticks.ToString();
+            await File.WriteAllLinesAsync(metaPath, lines);
+        }
+        catch { /* non-critical — in-memory state is authoritative for this session */ }
+    }
+
+    private void LoadLockoutState(string username)
+    {
+        if (string.IsNullOrEmpty(username)) return;
+        var metaPath = DatabaseService.GetMetaPath(username);
+        if (!File.Exists(metaPath)) return;
+        try
+        {
+            var lines = File.ReadAllLines(metaPath);
+            _consecutiveFailures = lines.Length > 4 && int.TryParse(lines[4], out int f)  ? f : 0;
+            _lockedUntil         = lines.Length > 5 && long.TryParse(lines[5], out long t) && t > 0
+                                   ? new DateTime(t, DateTimeKind.Utc)
+                                   : DateTime.MinValue;
+        }
+        catch { }
     }
 
     private string BuildFailureMessage()
