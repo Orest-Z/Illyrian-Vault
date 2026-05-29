@@ -1,3 +1,8 @@
+/* =======================================================
+ * Copyright (c) 2026 Orest Zogju. All Rights Reserved.
+ * Illyrian Vault - Local & Encrypted Password Manager
+ * Unauthorized copying of this file is strictly prohibited.
+ * ======================================================= */
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;

@@ -1,4 +1,9 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<!-- =======================================================
+ * Copyright (c) 2026 Orest Zogju. All Rights Reserved.
+ * Illyrian Vault - Local & Encrypted Password Manager
+ * Unauthorized copying of this file is strictly prohibited.
+ * ======================================================= -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                     xmlns:helpers="clr-namespace:IllyrianVault.Helpers">

@@ -1,4 +1,9 @@
-﻿using System.Net.Http;
+/* =======================================================
+ * Copyright (c) 2026 Orest Zogju. All Rights Reserved.
+ * Illyrian Vault - Local & Encrypted Password Manager
+ * Unauthorized copying of this file is strictly prohibited.
+ * ======================================================= */
+using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;

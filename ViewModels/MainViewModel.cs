@@ -1,4 +1,9 @@
-﻿using System.Collections.ObjectModel;
+/* =======================================================
+ * Copyright (c) 2026 Orest Zogju. All Rights Reserved.
+ * Illyrian Vault - Local & Encrypted Password Manager
+ * Unauthorized copying of this file is strictly prohibited.
+ * ======================================================= */
+using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -346,6 +351,22 @@ public partial class MainViewModel : BaseViewModel
     public bool ShowEntryDetail    => IsVaultSection && SelectedEntry is not null;
     public bool ShowEntryEmpty     => IsVaultSection && SelectedEntry is null;
 
+    // ── Sort options ───────────────────────────────────────────────────────────
+    // Exposed as a plain instance property so XAML can bind with {Binding SortOptions}.
+    // The list is readonly; only the selected item is observable.
+    public IReadOnlyList<string> SortOptions { get; } = new[]
+    {
+        "Recently used",
+        "Alphabetical (A-Z)",
+        "Alphabetical (Z-A)",
+        "Date created",
+    };
+
+    [ObservableProperty]
+    private string _selectedSortOption = "Recently used";
+
+    partial void OnSelectedSortOptionChanged(string value) => ApplyFilter();
+
     // ── Search / filter state ──────────────────────────────────────────────────
     [ObservableProperty]
     private string _searchQuery = string.Empty;
@@ -491,11 +512,12 @@ public partial class MainViewModel : BaseViewModel
         LockRequested?.Invoke();
     }
 
-    // ── Filtering ──────────────────────────────────────────────────────────────
+    // ── Filtering & Sorting ────────────────────────────────────────────────────
     private void ApplyFilter()
     {
         var q = _allEntries.AsEnumerable();
 
+        // 1. Category / section filter
         q = SelectedSection switch
         {
             "favorites"  => q.Where(e => e.IsFavorite),
@@ -506,14 +528,26 @@ public partial class MainViewModel : BaseViewModel
             _            => q,
         };
 
+        // 2. Search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
             var f = SearchQuery.Trim();
             q = q.Where(e =>
-                e.Model.Title.Contains(f, StringComparison.OrdinalIgnoreCase)        ||
-                e.DisplayUsername.Contains(f, StringComparison.OrdinalIgnoreCase)    ||
+                e.Model.Title.Contains(f, StringComparison.OrdinalIgnoreCase)     ||
+                e.DisplayUsername.Contains(f, StringComparison.OrdinalIgnoreCase) ||
                 e.Model.Url.Contains(f, StringComparison.OrdinalIgnoreCase));
         }
+
+        // 3. Sort — applied after filtering so only visible items are ordered
+        q = SelectedSortOption switch
+        {
+            "Alphabetical (A-Z)" => q.OrderBy(e => e.Model.Title,
+                                               StringComparer.OrdinalIgnoreCase),
+            "Alphabetical (Z-A)" => q.OrderByDescending(e => e.Model.Title,
+                                                         StringComparer.OrdinalIgnoreCase),
+            "Date created"       => q.OrderByDescending(e => e.Model.CreatedAt),
+            _                    => q.OrderByDescending(e => e.Model.UpdatedAt), // "Recently used"
+        };
 
         FilteredEntries.Clear();
         foreach (var e in q) FilteredEntries.Add(e);
