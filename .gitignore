@@ -34,3 +34,6 @@ Illyria Vault Preview.html
 .DS_Store
 Thumbs.db
 desktop.ini
+
+#-Script for adding copyright headers to source files, not part of the source code
+Add-CopyrightHeader.ps1
