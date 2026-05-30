@@ -151,7 +151,7 @@
     <DataTemplate x:Key="CardViewTemplate">
         <StackPanel>
             <!-- Cardholder Name -->
-            <TextBlock Text="Cardholder Name" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="CARDHOLDER NAME" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding CardholderName}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -162,18 +162,30 @@
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
             <!-- Card Number -->
-            <TextBlock Text="Card Number" Style="{StaticResource FieldLabel}"/>
-            <TextBlock Text="{Binding CardNumber}"
-                       Foreground="{DynamicResource BrushText}"
-                       FontFamily="{StaticResource FontMono}"
-                       FontSize="{StaticResource FontInput}"
-                       TextTrimming="CharacterEllipsis"
-                       Margin="0,8,0,0"/>
+            <TextBlock Text="CARD NUMBER" Style="{StaticResource FieldLabel}"/>
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding CardNumber}"
+                           Foreground="{DynamicResource BrushText}"
+                           FontFamily="{StaticResource FontMono}"
+                           FontSize="{StaticResource FontInput}"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <Button Grid.Column="1" Style="{StaticResource BtnIconSmall}"
+                        Command="{Binding DataContext.CopyCardNumberCommand,
+                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                        ToolTip="Copy card number">
+                    <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13"/>
+                </Button>
+            </Grid>
 
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
             <!-- Expiry -->
-            <TextBlock Text="Expiry (MM/YY)" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="EXPIRY (MM/YY)" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding Expiry}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontMono}"
@@ -182,13 +194,50 @@
 
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
-            <!-- CVV (always masked in view mode) -->
+            <!-- CVV — masked by default; reveal/copy via icon buttons -->
             <TextBlock Text="CVV" Style="{StaticResource FieldLabel}"/>
-            <TextBlock Text="•••"
-                       Foreground="{DynamicResource BrushText}"
-                       FontFamily="{StaticResource FontMono}"
-                       FontSize="{StaticResource FontInput}"
-                       Margin="0,8,0,0"/>
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Text: shows •••  when hidden, actual CVV when revealed -->
+                <TextBlock Foreground="{DynamicResource BrushText}"
+                           FontFamily="{StaticResource FontMono}"
+                           FontSize="{StaticResource FontInput}"
+                           VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="•••"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.SelectedEntry.IsCvvRevealed,
+                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                             Value="True">
+                                    <Setter Property="Text" Value="{Binding Cvv}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Eye toggle -->
+                <Button Grid.Column="1" Style="{StaticResource BtnIconSmall}"
+                        Command="{Binding DataContext.SelectedEntry.ToggleCvvRevealCommand,
+                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                        ToolTip="Show / hide CVV">
+                    <iconPacks:PackIconMaterial Kind="Eye" Width="13" Height="13"/>
+                </Button>
+
+                <!-- Copy -->
+                <Button Grid.Column="2" Style="{StaticResource BtnIconSmall}"
+                        Command="{Binding DataContext.CopyCvvCommand,
+                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                        ToolTip="Copy CVV">
+                    <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13"/>
+                </Button>
+            </Grid>
         </StackPanel>
     </DataTemplate>
 

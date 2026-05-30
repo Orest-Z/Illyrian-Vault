@@ -21,6 +21,7 @@
 
     <!-- Toast / misc -->
     <sys:String x:Key="CopiedToClipboard">Copied to clipboard ✓</sys:String>
+    <sys:String x:Key="EntrySaved">Saved ✓</sys:String>
     <sys:String x:Key="ExportWarningTitle">Plain Text Export Warning</sys:String>
     <sys:String x:Key="IdleAutoLock">Auto-lock after</sys:String>
     <sys:String x:Key="Minutes">minutes</sys:String>

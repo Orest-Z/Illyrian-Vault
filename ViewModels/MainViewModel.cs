@@ -1,4 +1,10 @@
+/* =======================================================
+ * Copyright (c) 2026 Orest Zogju. All Rights Reserved.
+ * Illyrian Vault - Local & Encrypted Password Manager
+ * Unauthorized copying of this file is strictly prohibited.
+ * ======================================================= */
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IllyrianVault.Models;
@@ -8,39 +14,239 @@ namespace IllyrianVault.ViewModels;
 
 public enum BreachStatus { NotChecked, Checking, Safe, Breached, Error }
 
-public class PasswordHistoryItemVm
+// ── Password history item VM ───────────────────────────────────────────────────
+public partial class PasswordHistoryItemVm : ObservableObject
 {
-    public string Plaintext { get; }
+    private readonly string            _encryptedPassword;
+    private readonly EncryptionService _crypto;
+    private readonly byte[]            _key;
+
     public string DateLabel { get; }
 
-    public PasswordHistoryItemVm(string encryptedPassword, DateTime createdAt, EncryptionService crypto, byte[] key)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotRevealed))]
+    [NotifyPropertyChangedFor(nameof(Plaintext))]
+    private bool _isRevealed;
+
+    public bool   IsNotRevealed => !IsRevealed;
+    public string Plaintext     => IsRevealed && !string.IsNullOrEmpty(_encryptedPassword)
+                                   ? _crypto.Decrypt(_encryptedPassword, _key)
+                                   : "••••••••••••••••";
+
+    [RelayCommand] private void Reveal() => IsRevealed = true;
+    [RelayCommand] private void Hide()   => IsRevealed = false;
+
+    public PasswordHistoryItemVm(string encryptedPassword, DateTime createdAt,
+                                 EncryptionService crypto, byte[] key)
     {
-        Plaintext = crypto.Decrypt(encryptedPassword, key);
-        DateLabel = createdAt.ToLocalTime().ToString("MMM dd, yyyy  HH:mm");
+        _encryptedPassword = encryptedPassword;
+        _crypto            = crypto;
+        _key               = key;
+        DateLabel          = createdAt.ToLocalTime().ToString("MMM dd, yyyy  HH:mm");
     }
 }
 
-// Wraps a PasswordEntry with display-time computed properties.
-// Java analogy: this is a DTO/Projection on top of the raw Model.
+// ── Entry view model ───────────────────────────────────────────────────────────
 public partial class EntryViewModel : ObservableObject
 {
     private readonly EncryptionService _crypto;
     private readonly byte[]            _key;
+    private readonly DatabaseService   _db;
 
     public PasswordEntry Model { get; }
 
+    // Fired after a successful save so MainViewModel can show the "Saved ✓" toast.
+    public event Action? SaveCompleted;
 
+    // ── List display ──────────────────────────────────────────────────────────
+    public string DisplayTitle    => string.IsNullOrEmpty(Model.Title) ? "(untitled)" : Model.Title;
+    public string DisplayUsername => Model.Username;
 
-    [ObservableProperty]
-    private bool _isPasswordRevealed;
-    
+    // ── Tile / header ─────────────────────────────────────────────────────────
+    public string TileInitial      => string.IsNullOrEmpty(Model.Title) ? "?" : Model.Title[0].ToString().ToUpperInvariant();
+    public string UpdatedFormatted => Model.UpdatedAt.ToString("MMM dd, yyyy");
 
-    // Observable wrapper so UI reacts when ToggleFavorite runs.
+    // ── Favorite ──────────────────────────────────────────────────────────────
     [ObservableProperty]
     private bool _isFavorite;
 
-    // ── Breach check state ─────────────────────────────────────────────────────
+    partial void OnIsFavoriteChanged(bool value)
+    {
+        Model.IsFavorite = value;
+        OnPropertyChanged(nameof(IsFavoriteColor));
+    }
 
+    public System.Windows.Media.Brush IsFavoriteColor =>
+        IsFavorite
+            ? (System.Windows.Application.Current.TryFindResource("BrushWarning")
+               as System.Windows.Media.Brush) ?? System.Windows.Media.Brushes.Goldenrod
+            : (System.Windows.Application.Current.TryFindResource("BrushTextSecondary")
+               as System.Windows.Media.Brush) ?? System.Windows.Media.Brushes.Gray;
+
+    // ── Edit mode ─────────────────────────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotEditing))]
+    [NotifyPropertyChangedFor(nameof(IsEditingLogin))]
+    private bool _isEditing;
+
+    public bool IsNotEditing   => !IsEditing;
+    public bool IsEditingLogin => IsEditing && Model.Category == "Login";
+
+    [ObservableProperty]
+    private string _editTitle = string.Empty;
+
+    [RelayCommand]
+    private void Edit()
+    {
+        EditTitle       = Model.Title;
+        _currentPayload = BuildPayload(forEditing: true);
+        OnPropertyChanged(nameof(CurrentPayload));
+        IsEditing = true;
+    }
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        Model.Title     = EditTitle.Trim();
+        Model.UpdatedAt = DateTime.UtcNow;
+
+        // Flush payload fields back into the flat Model (and EncryptedPayload for
+        // structured types like Card and Identity).
+        switch (_currentPayload)
+        {
+            case LoginPayload lp:
+                Model.Username = lp.Username;
+                if (!string.IsNullOrEmpty(lp.Password))
+                    Model.EncryptedPassword = _crypto.Encrypt(lp.Password, _key);
+                Model.Url   = lp.Url;
+                Model.Notes = lp.Notes;
+                break;
+
+            case NotePayload np:
+                Model.Notes = np.Content;
+                break;
+
+            case CardPayload cp:
+                // Cardholder name doubles as the "username" shown in the list row.
+                Model.Username         = cp.CardholderName;
+                Model.EncryptedPayload = _crypto.Encrypt(
+                    JsonSerializer.Serialize(cp), _key);
+                break;
+
+            case IdentityPayload ip:
+                Model.Username         = ip.FullName;
+                Model.EncryptedPayload = _crypto.Encrypt(
+                    JsonSerializer.Serialize(ip), _key);
+                break;
+        }
+
+        await _db.UpdateEntryAsync(Model);
+
+        // Reload payload in view mode so the detail panel reflects saved values.
+        _currentPayload = BuildPayload(forEditing: false);
+        IsEditing       = false;
+
+        // Notify list row and detail header to refresh.
+        OnPropertyChanged(nameof(DisplayTitle));
+        OnPropertyChanged(nameof(DisplayUsername));
+        OnPropertyChanged(nameof(TileInitial));
+        OnPropertyChanged(nameof(UpdatedFormatted));
+        OnPropertyChanged(nameof(CurrentPayload));
+
+        SaveCompleted?.Invoke();
+    }
+
+    [RelayCommand]
+    private void CancelEdit()
+    {
+        _currentPayload = BuildPayload(forEditing: false);
+        IsEditing       = false;
+        OnPropertyChanged(nameof(CurrentPayload));
+    }
+
+    // ── Payload ───────────────────────────────────────────────────────────────
+    private IEntryPayload? _currentPayload;
+    public  IEntryPayload? CurrentPayload => _currentPayload ??= BuildPayload(forEditing: false);
+
+    private IEntryPayload BuildPayload(bool forEditing) => Model.Category switch
+    {
+        "Note"     => new NotePayload     { Content = Model.Notes },
+        "Card"     => DeserializePayload<CardPayload>()     ?? new CardPayload(),
+        "Identity" => DeserializePayload<IdentityPayload>() ?? new IdentityPayload(),
+        _          => new LoginPayload
+        {
+            Username = Model.Username,
+            Password = forEditing && !string.IsNullOrEmpty(Model.EncryptedPassword)
+                       ? _crypto.Decrypt(Model.EncryptedPassword, _key)
+                       : string.Empty,
+            Url      = Model.Url,
+            Notes    = Model.Notes,
+        },
+    };
+
+    // Decrypt and JSON-deserialize Model.EncryptedPayload into T.
+    // Returns null if the field is empty or decryption/deserialization fails.
+    private T? DeserializePayload<T>() where T : class
+    {
+        if (string.IsNullOrEmpty(Model.EncryptedPayload)) return null;
+        try
+        {
+            var json = _crypto.Decrypt(Model.EncryptedPayload, _key);
+            return JsonSerializer.Deserialize<T>(json);
+        }
+        catch { return null; }
+    }
+
+    // ── CVV reveal (card entries only) ────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotCvvRevealed))]
+    private bool _isCvvRevealed;
+
+    public bool IsNotCvvRevealed => !IsCvvRevealed;
+
+    [RelayCommand] private void ToggleCvvReveal() => IsCvvRevealed = !IsCvvRevealed;
+
+    // ── Password reveal (login entries only) ──────────────────────────────────
+    [ObservableProperty]
+    private bool _isPasswordRevealed;
+
+    partial void OnIsPasswordRevealedChanged(bool value) =>
+        OnPropertyChanged(nameof(DisplayPassword));
+
+    public string DisplayPassword =>
+        IsPasswordRevealed && !string.IsNullOrEmpty(Model.EncryptedPassword)
+            ? _crypto.Decrypt(Model.EncryptedPassword, _key)
+            : "••••••••••••••••";
+
+    // ── Password history ──────────────────────────────────────────────────────
+    public ObservableCollection<PasswordHistoryItemVm> History { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowHistoryEmpty))]
+    private bool _showHistory;
+
+    public bool ShowHistoryEmpty => ShowHistory && History.Count == 0;
+
+    [RelayCommand]
+    private async Task ToggleHistoryAsync()
+    {
+        if (!ShowHistory && History.Count == 0)
+            await LoadHistoryAsync();
+        ShowHistory = !ShowHistory;
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        var records = await _db.GetPasswordHistoryAsync(Model.Id);
+        History.Clear();
+        foreach (var r in records)
+            History.Add(new PasswordHistoryItemVm(r.EncryptedPassword, r.CreatedAt, _crypto, _key));
+    }
+
+    // ── Per-entry password generator ──────────────────────────────────────────
+    public PasswordGeneratorViewModel Generator { get; }
+
+    // ── Breach check ──────────────────────────────────────────────────────────
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowBreachNotChecked))]
     [NotifyPropertyChangedFor(nameof(ShowBreachChecking))]
@@ -63,11 +269,9 @@ public partial class EntryViewModel : ObservableObject
     private async Task CheckBreachAsync()
     {
         if (string.IsNullOrEmpty(Model.EncryptedPassword)) return;
-
         var plaintext = _crypto.Decrypt(Model.EncryptedPassword, _key);
         BreachStatus  = BreachStatus.Checking;
         BreachMessage = string.Empty;
-
         try
         {
             var result    = await BreachCheckService.CheckPasswordAsync(plaintext);
@@ -85,54 +289,33 @@ public partial class EntryViewModel : ObservableObject
 
     private bool CanCheckBreach() => BreachStatus != BreachStatus.Checking;
 
-    // ── Display helpers ────────────────────────────────────────────────────────
-
-    partial void OnIsPasswordRevealedChanged(bool value) =>
-        OnPropertyChanged(nameof(DisplayPassword));
-
-    partial void OnIsFavoriteChanged(bool value)
-    {
-        Model.IsFavorite = value;
-        OnPropertyChanged(nameof(IsFavoriteColor));
-    }
-
-    // Foreground color helper: gold when favorite, muted otherwise.
-    public System.Windows.Media.Brush IsFavoriteColor =>
-        IsFavorite
-            ? (System.Windows.Application.Current.TryFindResource("BrushWarning") as System.Windows.Media.Brush)
-              ?? System.Windows.Media.Brushes.Goldenrod
-            : (System.Windows.Application.Current.TryFindResource("BrushTextSecondary") as System.Windows.Media.Brush)
-              ?? System.Windows.Media.Brushes.Gray;
-
-    public string TileInitial      => string.IsNullOrEmpty(Model.Title) ? "?" : Model.Title[0].ToString().ToUpperInvariant();
-    public string UpdatedFormatted => Model.UpdatedAt.ToString("MMM dd, yyyy");
-
-    public string DisplayPassword =>
-        IsPasswordRevealed && !string.IsNullOrEmpty(Model.EncryptedPassword)
-            ? _crypto.Decrypt(Model.EncryptedPassword, _key)
-            : "••••••••••••••••";
-
-    public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key)
+    // ── Constructor ───────────────────────────────────────────────────────────
+    public EntryViewModel(PasswordEntry model, EncryptionService crypto, byte[] key, DatabaseService db)
     {
         Model       = model;
         _crypto     = crypto;
         _key        = key;
+        _db         = db;
         _isFavorite = model.IsFavorite;
+
+        Generator = new PasswordGeneratorViewModel();
+        Generator.PasswordAccepted += pw =>
+        {
+            if (CurrentPayload is LoginPayload lp)
+                lp.Password = pw;
+        };
     }
 }
 
+// ── Main view model ────────────────────────────────────────────────────────────
 public partial class MainViewModel : BaseViewModel
 {
     private readonly DatabaseService   _db;
     private readonly EncryptionService _crypto;
     private readonly byte[]            _sessionKey;
 
-    // Fired when the user locks the vault — MainWindow subscribes and shows AuthWindow.
-    public event Action? LockRequested;
-
-    // Fired when the user clicks New Entry — MainWindow opens AddEntryWindow.
-    public event Action? NewEntryRequested;
-
+    public event Action?           LockRequested;
+    public event Action?           NewEntryRequested;
     public event Action?           ExportRequested;
     public event Action<TimeSpan>? IdleTimeoutChanged;
     public event Func<bool>?       ConfirmDeleteRequested;
@@ -144,7 +327,7 @@ public partial class MainViewModel : BaseViewModel
 
     public IEnumerable<EntryViewModel> AllEntries => _allEntries;
 
-    // ── Tools ──────────────────────────────────────────────────────────────────
+    // ── Standalone generator (Generator section) ──────────────────────────────
     public PasswordGeneratorViewModel Generator { get; } = new();
     public string AppVersion => System.Reflection.Assembly
         .GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
@@ -187,9 +370,7 @@ public partial class MainViewModel : BaseViewModel
 
     // ── Entry collections ──────────────────────────────────────────────────────
     private readonly ObservableCollection<EntryViewModel> _allEntries = [];
-
-    // The ListBox in the View binds to this filtered list.
-    public ObservableCollection<EntryViewModel> FilteredEntries { get; } = [];
+    public  ObservableCollection<EntryViewModel> FilteredEntries { get; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedEntry))]
@@ -206,7 +387,7 @@ public partial class MainViewModel : BaseViewModel
     public bool ShowEntryDetail    => IsVaultSection && SelectedEntry is not null;
     public bool ShowEntryEmpty     => IsVaultSection && SelectedEntry is null;
 
-    // ── Search / filter state ──────────────────────────────────────────────────
+    // ── Search / filter ────────────────────────────────────────────────────────
     [ObservableProperty]
     private string _searchQuery = string.Empty;
 
@@ -257,7 +438,7 @@ public partial class MainViewModel : BaseViewModel
             var entries = await _db.GetAllEntriesAsync();
             _allEntries.Clear();
             foreach (var e in entries)
-                _allEntries.Add(new EntryViewModel(e, _crypto, _sessionKey));
+                _allEntries.Add(CreateEntryVm(e));
             ApplyFilter();
             RefreshCounts();
         }
@@ -290,7 +471,7 @@ public partial class MainViewModel : BaseViewModel
     {
         if (SelectedEntry is null) return;
         ClipboardGuard.SetAndScheduleWipe(SelectedEntry.Model.Username);
-        ShowToast();
+        ShowCopiedToast();
     }
 
     [RelayCommand]
@@ -299,7 +480,25 @@ public partial class MainViewModel : BaseViewModel
         if (SelectedEntry is null || string.IsNullOrEmpty(SelectedEntry.Model.EncryptedPassword)) return;
         var plaintext = _crypto.Decrypt(SelectedEntry.Model.EncryptedPassword, _sessionKey);
         ClipboardGuard.SetAndScheduleWipe(plaintext);
-        ShowToast();
+        ShowCopiedToast();
+    }
+
+    // Copies the card number for the currently selected Card entry.
+    [RelayCommand]
+    private void CopyCardNumber()
+    {
+        if (SelectedEntry?.CurrentPayload is not CardPayload cp) return;
+        ClipboardGuard.SetAndScheduleWipe(cp.CardNumber);
+        ShowCopiedToast();
+    }
+
+    // Copies the CVV for the currently selected Card entry.
+    [RelayCommand]
+    private void CopyCvv()
+    {
+        if (SelectedEntry?.CurrentPayload is not CardPayload cp) return;
+        ClipboardGuard.SetAndScheduleWipe(cp.Cvv);
+        ShowCopiedToast();
     }
 
     [RelayCommand]
@@ -315,7 +514,7 @@ public partial class MainViewModel : BaseViewModel
     public async Task InsertNewEntryAsync(PasswordEntry e)
     {
         e.Id = await _db.InsertEntryAsync(e);
-        _allEntries.Add(new EntryViewModel(e, _crypto, _sessionKey));
+        _allEntries.Add(CreateEntryVm(e));
         ApplyFilter();
         RefreshCounts();
         SelectedEntry = FilteredEntries.FirstOrDefault(x => x.Model.Id == e.Id);
@@ -325,6 +524,7 @@ public partial class MainViewModel : BaseViewModel
     private async Task LockAsync()
     {
         App.ClearSessionKey();
+        ClipboardGuard.ClearNow();
         await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
@@ -333,6 +533,7 @@ public partial class MainViewModel : BaseViewModel
     private async Task LogoutAsync()
     {
         App.ClearSessionKey();
+        ClipboardGuard.ClearNow();
         await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
@@ -386,15 +587,27 @@ public partial class MainViewModel : BaseViewModel
         OnPropertyChanged(nameof(IdentityCount));
     }
 
-    private void ShowToast() =>
+    private void ShowCopiedToast() =>
         ToastRequested?.Invoke(App.Localization["CopiedToClipboard"]);
+
+    private void ShowSavedToast() =>
+        ToastRequested?.Invoke(App.Localization["EntrySaved"]);
+
+    // Factory method: creates an EntryViewModel and subscribes to its save event
+    // so the window can show the "Saved ✓" toast without coupling the VM to the View.
+    private EntryViewModel CreateEntryVm(PasswordEntry e)
+    {
+        var evm = new EntryViewModel(e, _crypto, _sessionKey, _db);
+        evm.SaveCompleted += ShowSavedToast;
+        return evm;
+    }
 
     public MainViewModel(DatabaseService db, EncryptionService crypto, byte[] sessionKey, string username)
     {
-        _db         = db;
-        _crypto     = crypto;
-        _sessionKey = sessionKey;
+        _db             = db;
+        _crypto         = crypto;
+        _sessionKey     = sessionKey;
         ProfileUsername = username;
-        Generator.ClipboardWritten += ShowToast;
+        Generator.ClipboardWritten += ShowCopiedToast;
     }
 }
