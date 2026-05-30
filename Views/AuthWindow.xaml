@@ -84,6 +84,18 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
+                    <!-- Language toggle -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Margin="0,0,12,0">
+                        <Button Style="{StaticResource BtnSecondary}"
+                                Content="{Binding CurrentLanguage}"
+                                Command="{Binding ToggleLanguageCommand}"
+                                Padding="10,3"
+                                FontSize="11"
+                                FontWeight="SemiBold"/>
+                    </StackPanel>
+
                     <!-- Window controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <Button Style="{StaticResource BtnWinControl}" Click="MinimizeClick">

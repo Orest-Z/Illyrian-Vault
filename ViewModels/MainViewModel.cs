@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using IllyrianVault.Models;
+using IllyrianVault.Services;
 
-namespace IllyriaVault.ViewModels;
+namespace IllyrianVault.ViewModels;
 
 public enum BreachStatus { NotChecked, Checking, Safe, Breached, Error }
 
@@ -24,13 +26,10 @@ public partial class EntryViewModel : ObservableObject
 {
     private readonly EncryptionService _crypto;
     private readonly byte[]            _key;
-    private readonly DatabaseService   _db;
 
     public PasswordEntry Model { get; }
 
-    // Fired after a successful save so MainViewModel can refresh SelectedEntry bindings.
-    public event Action? SaveCompleted;
-    
+
 
     [ObservableProperty]
     private bool _isPasswordRevealed;
@@ -134,14 +133,33 @@ public partial class MainViewModel : BaseViewModel
     // Fired when the user clicks New Entry — MainWindow opens AddEntryWindow.
     public event Action? NewEntryRequested;
 
+    public event Action?           ExportRequested;
+    public event Action<TimeSpan>? IdleTimeoutChanged;
+    public event Func<bool>?       ConfirmDeleteRequested;
+    public event Action<string>?   ToastRequested;
+
     // ── Profile ────────────────────────────────────────────────────────────────
     public string ProfileUsername { get; }
     public string ProfileInitial  => string.IsNullOrEmpty(ProfileUsername) ? "?" : ProfileUsername[0].ToString().ToUpperInvariant();
+
+    public IEnumerable<EntryViewModel> AllEntries => _allEntries;
 
     // ── Tools ──────────────────────────────────────────────────────────────────
     public PasswordGeneratorViewModel Generator { get; } = new();
     public string AppVersion => System.Reflection.Assembly
         .GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
+    // ── Idle auto-lock ─────────────────────────────────────────────────────────
+    public IReadOnlyList<int> IdleTimeoutOptions { get; } = new[] { 1, 5, 10, 15, 30 };
+
+    [ObservableProperty]
+    private int _idleTimeoutMinutes = 5;
+
+    partial void OnIdleTimeoutMinutesChanged(int value) =>
+        IdleTimeoutChanged?.Invoke(TimeSpan.FromMinutes(value));
+
+    [RelayCommand]
+    private void RequestExport() => ExportRequested?.Invoke();
 
     // ── Theme / Language ───────────────────────────────────────────────────────
     [ObservableProperty]
@@ -161,8 +179,11 @@ public partial class MainViewModel : BaseViewModel
         App.Theme.Apply(theme);
     }
 
-    partial void OnCurrentLanguageChanged(string value) =>
+    partial void OnCurrentLanguageChanged(string value)
+    {
         App.Localization.Apply(value == "SQ" ? AppLanguage.Sq : AppLanguage.En);
+        OnPropertyChanged(nameof(SortOptions));
+    }
 
     // ── Entry collections ──────────────────────────────────────────────────────
     private readonly ObservableCollection<EntryViewModel> _allEntries = [];
@@ -200,6 +221,20 @@ public partial class MainViewModel : BaseViewModel
     private string _selectedSection = "all";
 
     partial void OnSelectedSectionChanged(string value) => ApplyFilter();
+
+    // ── Sort ───────────────────────────────────────────────────────────────────
+    public IReadOnlyList<string> SortOptions =>
+    [
+        App.Localization["SortRecentlyUsed"],
+        App.Localization["SortAlphaAZ"],
+        App.Localization["SortAlphaZA"],
+        App.Localization["SortDateCreated"],
+    ];
+
+    [ObservableProperty]
+    private int _selectedSortIndex = 0;
+
+    partial void OnSelectedSortIndexChanged(int value) => ApplyFilter();
 
     // ── Nav badge counts ───────────────────────────────────────────────────────
     public int TotalCount    => _allEntries.Count;
@@ -242,6 +277,7 @@ public partial class MainViewModel : BaseViewModel
     private async Task DeleteEntryAsync()
     {
         if (SelectedEntry is null) return;
+        if (ConfirmDeleteRequested is not null && ConfirmDeleteRequested.Invoke() != true) return;
         await _db.DeleteEntryAsync(SelectedEntry.Model.Id);
         _allEntries.Remove(SelectedEntry);
         SelectedEntry = FilteredEntries.FirstOrDefault();
@@ -253,7 +289,8 @@ public partial class MainViewModel : BaseViewModel
     private void CopyUsername()
     {
         if (SelectedEntry is null) return;
-        System.Windows.Clipboard.SetText(SelectedEntry.Model.Username);
+        ClipboardGuard.SetAndScheduleWipe(SelectedEntry.Model.Username);
+        ShowToast();
     }
 
     [RelayCommand]
@@ -261,7 +298,8 @@ public partial class MainViewModel : BaseViewModel
     {
         if (SelectedEntry is null || string.IsNullOrEmpty(SelectedEntry.Model.EncryptedPassword)) return;
         var plaintext = _crypto.Decrypt(SelectedEntry.Model.EncryptedPassword, _sessionKey);
-        System.Windows.Clipboard.SetText(plaintext);
+        ClipboardGuard.SetAndScheduleWipe(plaintext);
+        ShowToast();
     }
 
     [RelayCommand]
@@ -286,7 +324,7 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LockAsync()
     {
-        App.SessionKey = [];
+        App.ClearSessionKey();
         await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
@@ -294,7 +332,7 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     private async Task LogoutAsync()
     {
-        App.SessionKey = [];
+        App.ClearSessionKey();
         await App.Database.DisposeAsync();
         LockRequested?.Invoke();
     }
@@ -323,6 +361,14 @@ public partial class MainViewModel : BaseViewModel
                 e.Model.Url.Contains(f, StringComparison.OrdinalIgnoreCase));
         }
 
+        q = SelectedSortIndex switch
+        {
+            1 => q.OrderBy(e => e.Model.Title, StringComparer.OrdinalIgnoreCase),
+            2 => q.OrderByDescending(e => e.Model.Title, StringComparer.OrdinalIgnoreCase),
+            3 => q.OrderByDescending(e => e.Model.CreatedAt),
+            _ => q.OrderByDescending(e => e.Model.UpdatedAt),
+        };
+
         FilteredEntries.Clear();
         foreach (var e in q) FilteredEntries.Add(e);
 
@@ -340,11 +386,15 @@ public partial class MainViewModel : BaseViewModel
         OnPropertyChanged(nameof(IdentityCount));
     }
 
+    private void ShowToast() =>
+        ToastRequested?.Invoke(App.Localization["CopiedToClipboard"]);
+
     public MainViewModel(DatabaseService db, EncryptionService crypto, byte[] sessionKey, string username)
     {
         _db         = db;
         _crypto     = crypto;
         _sessionKey = sessionKey;
         ProfileUsername = username;
+        Generator.ClipboardWritten += ShowToast;
     }
 }

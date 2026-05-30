@@ -646,7 +646,7 @@
                                    VerticalAlignment="Center"/>
                         <ComboBox Style="{StaticResource SortComboBox}"
                                   ItemsSource="{Binding SortOptions}"
-                                  SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"
+                                  SelectedIndex="{Binding SelectedSortIndex, Mode=TwoWay}"
                                   Margin="6,0,0,0"/>
                     </StackPanel>
 
@@ -1601,6 +1601,29 @@
                     </ScrollViewer>
 
                 </Grid>
+
+                <!-- ── Copy toast overlay ─────────────────────────────────────────────── -->
+                <Border x:Name="ToastBorder"
+                        Grid.RowSpan="99" Grid.ColumnSpan="99"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,40"
+                        Padding="18,10"
+                        CornerRadius="8"
+                        Background="{DynamicResource BrushElevated}"
+                        BorderBrush="{DynamicResource BrushStrokeSubtle}"
+                        BorderThickness="1"
+                        Opacity="0"
+                        IsHitTestVisible="False">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.35"/>
+                    </Border.Effect>
+                    <TextBlock x:Name="ToastText"
+                               Foreground="{DynamicResource BrushText}"
+                               FontFamily="{StaticResource FontPrimary}"
+                               FontSize="{StaticResource FontBody}"
+                               FontWeight="Medium"/>
+                </Border>
 
             </Grid>
 

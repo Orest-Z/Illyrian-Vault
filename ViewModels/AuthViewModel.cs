@@ -4,6 +4,7 @@
  * Unauthorized copying of this file is strictly prohibited.
  * ======================================================= */
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using IllyrianVault.Services;
 
 namespace IllyrianVault.ViewModels;
@@ -15,6 +16,16 @@ public partial class AuthViewModel : ObservableObject
 
     [ObservableProperty]
     private object? _currentViewModel;
+
+    [ObservableProperty]
+    private string _currentLanguage = App.Localization.Current == AppLanguage.Sq ? "SQ" : "EN";
+
+    partial void OnCurrentLanguageChanged(string value) =>
+        App.Localization.Apply(value == "SQ" ? AppLanguage.Sq : AppLanguage.En);
+
+    [RelayCommand]
+    private void ToggleLanguage() =>
+        CurrentLanguage = CurrentLanguage == "EN" ? "SQ" : "EN";
 
     // Carries the username to MainWindow on successful auth.
     public event Action<string>? LoginSucceeded;

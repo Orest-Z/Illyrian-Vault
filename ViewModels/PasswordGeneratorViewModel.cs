@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using IllyrianVault.Services;
 
 namespace IllyrianVault.ViewModels;
 
@@ -101,13 +102,19 @@ public partial class PasswordGeneratorViewModel : ObservableObject
     // Raised when the user clicks "Use This Password" — consumed by AddEntryViewModel.
     public event Action<string>? PasswordAccepted;
 
+    // Raised after each successful copy so MainViewModel can show the toast.
+    public event Action? ClipboardWritten;
+
     [RelayCommand]
     private void Generate() =>
         GeneratedPassword = UsePassphrase ? BuildPassphrase() : BuildPassword();
 
     [RelayCommand(CanExecute = nameof(HasPassword))]
-    private void CopyToClipboard() =>
-        System.Windows.Clipboard.SetText(GeneratedPassword);
+    private void CopyToClipboard()
+    {
+        ClipboardGuard.SetAndScheduleWipe(GeneratedPassword);
+        ClipboardWritten?.Invoke();
+    }
 
     [RelayCommand(CanExecute = nameof(HasPassword))]
     private void UsePassword() =>

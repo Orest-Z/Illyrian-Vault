@@ -82,6 +82,7 @@ public partial class MainWindow : Window
         _vm.LockRequested          += OnLockRequested;
         _vm.NewEntryRequested      += OnNewEntryRequested;
         _vm.ExportRequested        += OnExportRequested;
+        _vm.ToastRequested         += ShowToast;
         _vm.IdleTimeoutChanged     += t => _idleLock.SetTimeout(t);
         _vm.ConfirmDeleteRequested += () =>
             MessageBox.Show(
@@ -124,7 +125,6 @@ public partial class MainWindow : Window
             src.AddHook(WndProc);
             _idleLock.Start();
         }
-        WindowState = WindowState.Maximized;
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -240,7 +240,9 @@ public partial class MainWindow : Window
 
             var rows = _vm.AllEntries.Select(evm =>
             {
-                var pw = evm.CurrentPayload is LoginPayload lp ? lp.Password : string.Empty;
+                var pw = !string.IsNullOrEmpty(evm.Model.EncryptedPassword)
+                    ? App.Encryption.Decrypt(evm.Model.EncryptedPassword, App.SessionKey)
+                    : string.Empty;
                 return (evm.Model, pw);
             });
             ExportService.ExportCsv(rows, dialog.FileName);
@@ -253,6 +255,27 @@ public partial class MainWindow : Window
 
         MessageBox.Show("Export saved successfully.", "Illyrian Vault",
             MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    // ── Copy toast ────────────────────────────────────────────────────────────────
+    private void ShowToast(string message)
+    {
+        ToastText.Text = message;
+
+        var fadeIn  = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(900),
+        };
+
+        var storyboard = new Storyboard();
+        Storyboard.SetTarget(fadeIn,  ToastBorder);
+        Storyboard.SetTarget(fadeOut, ToastBorder);
+        Storyboard.SetTargetProperty(fadeIn,  new PropertyPath(OpacityProperty));
+        Storyboard.SetTargetProperty(fadeOut, new PropertyPath(OpacityProperty));
+        storyboard.Children.Add(fadeIn);
+        storyboard.Children.Add(fadeOut);
+        storyboard.Begin();
     }
 
     // ── Title bar ─────────────────────────────────────────────────────────────────

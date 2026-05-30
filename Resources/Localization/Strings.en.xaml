@@ -13,6 +13,19 @@
     <sys:String x:Key="EncryptionLabel">Encrypted · AES-256</sys:String>
     <sys:String x:Key="ProfileLocal">Local profile</sys:String>
 
+    <!-- Sort options -->
+    <sys:String x:Key="SortRecentlyUsed">Recently used</sys:String>
+    <sys:String x:Key="SortAlphaAZ">Alphabetical (A-Z)</sys:String>
+    <sys:String x:Key="SortAlphaZA">Alphabetical (Z-A)</sys:String>
+    <sys:String x:Key="SortDateCreated">Date created</sys:String>
+
+    <!-- Toast / misc -->
+    <sys:String x:Key="CopiedToClipboard">Copied to clipboard ✓</sys:String>
+    <sys:String x:Key="ExportWarningTitle">Plain Text Export Warning</sys:String>
+    <sys:String x:Key="IdleAutoLock">Auto-lock after</sys:String>
+    <sys:String x:Key="Minutes">minutes</sys:String>
+    <sys:String x:Key="RecoveryTitle">Account Recovery</sys:String>
+
     <!-- Login -->
     <sys:String x:Key="LoginWelcome">Welcome back</sys:String>
     <sys:String x:Key="LoginSubtitle">Enter your master password to unlock your vault.</sys:String>

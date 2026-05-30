@@ -13,6 +13,19 @@
     <sys:String x:Key="EncryptionLabel">I Enkriptuar · AES-256</sys:String>
     <sys:String x:Key="ProfileLocal">Profil lokal</sys:String>
 
+    <!-- Sort options -->
+    <sys:String x:Key="SortRecentlyUsed">Përdorur së fundmi</sys:String>
+    <sys:String x:Key="SortAlphaAZ">Sipas alfabetit (A-Z)</sys:String>
+    <sys:String x:Key="SortAlphaZA">Sipas alfabetit (Z-A)</sys:String>
+    <sys:String x:Key="SortDateCreated">Data e krijimit</sys:String>
+
+    <!-- Toast / misc -->
+    <sys:String x:Key="CopiedToClipboard">U kopjua me sukses ✓</sys:String>
+    <sys:String x:Key="ExportWarningTitle">Paralajmërim Eksporti</sys:String>
+    <sys:String x:Key="IdleAutoLock">Kyçje automatike pas</sys:String>
+    <sys:String x:Key="Minutes">minutave</sys:String>
+    <sys:String x:Key="RecoveryTitle">Rikuperimi i llogarisë</sys:String>
+
     <sys:String x:Key="LoginWelcome">Mirësevini përsëri</sys:String>
     <sys:String x:Key="LoginSubtitle">Shkruani fjalëkalimin kryesor për të hapur kasafortën tuaj.</sys:String>
     <sys:String x:Key="MasterPassword">Fjalëkalimi Kryesor</sys:String>
