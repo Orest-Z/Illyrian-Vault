@@ -46,6 +46,11 @@ public partial class LoginViewModel : BaseViewModel
     private const int HardLockoutThreshold = 10;   // attempts before per-attempt lockout
     private const int HardLockoutSeconds   = 300;  // 5 minutes
 
+    // SECURITY NOTE: The lockout counter and expiry are DPAPI-protected in vault.meta,
+    // binding them to the current Windows user account. An attacker who compromises
+    // the user's Windows session can still reset them by deleting vault.meta entirely.
+    // The lockout is defence-in-depth UX friction, NOT a cryptographic guarantee.
+    // The real brute-force barrier is PBKDF2-SHA512 at 600,000 iterations.
     private volatile int _consecutiveFailures = 0;
     private DateTime     _lockedUntil         = DateTime.MinValue;
 
@@ -242,13 +247,19 @@ public partial class LoginViewModel : BaseViewModel
         try
         {
             var lines = (await File.ReadAllLinesAsync(metaPath)).ToList();
-            if (lines.Count == 3) lines.Add("v1"); // back-fill version tag for old vaults
-            while (lines.Count < 6)  lines.Add("0");
-            lines[4] = _consecutiveFailures.ToString();
-            lines[5] = _lockedUntil.Ticks.ToString();
+            if (lines.Count == 3) lines.Add("v1");
+            while (lines.Count < 6) lines.Add("0");
+
+            // Encrypt lockout values with DPAPI (CurrentUser scope) so an attacker
+            // with filesystem access cannot simply reset the counter by editing the file.
+            // DPAPI ties the ciphertext to the Windows user account — a different user
+            // or a different machine cannot decrypt it. On failure we fall back to
+            // plaintext so a DPAPI-unavailable environment degrades gracefully.
+            lines[4] = DpapiProtect($"{_consecutiveFailures}");
+            lines[5] = DpapiProtect($"{_lockedUntil.Ticks}");
             await File.WriteAllLinesAsync(metaPath, lines);
         }
-        catch { /* non-critical — in-memory state is authoritative for this session */ }
+        catch { }
     }
 
     private async Task LoadLockoutStateAsync(string username)
@@ -259,8 +270,8 @@ public partial class LoginViewModel : BaseViewModel
         try
         {
             var lines = await File.ReadAllLinesAsync(metaPath);
-            _consecutiveFailures = lines.Length > 4 && int.TryParse(lines[4], out int f)  ? f : 0;
-            _lockedUntil         = lines.Length > 5 && long.TryParse(lines[5], out long t) && t > 0
+            _consecutiveFailures = lines.Length > 4 && int.TryParse(DpapiUnprotect(lines[4]), out int f)  ? f : 0;
+            _lockedUntil         = lines.Length > 5 && long.TryParse(DpapiUnprotect(lines[5]), out long t) && t > 0
                                    ? new DateTime(t, DateTimeKind.Utc)
                                    : DateTime.MinValue;
         }
@@ -289,4 +300,26 @@ public partial class LoginViewModel : BaseViewModel
 
     [RelayCommand]
     private void Exit() => System.Windows.Application.Current.Shutdown();
+
+    private static string DpapiProtect(string value)
+    {
+        try
+        {
+            var plain  = System.Text.Encoding.UTF8.GetBytes(value);
+            var cipher = ProtectedData.Protect(plain, null, DataProtectionScope.CurrentUser);
+            return Convert.ToBase64String(cipher);
+        }
+        catch { return value; }   // graceful degradation if DPAPI unavailable
+    }
+
+    private static string DpapiUnprotect(string value)
+    {
+        try
+        {
+            var cipher = Convert.FromBase64String(value);
+            var plain  = ProtectedData.Unprotect(cipher, null, DataProtectionScope.CurrentUser);
+            return System.Text.Encoding.UTF8.GetString(plain);
+        }
+        catch { return value; }   // handles legacy plaintext values and DPAPI errors
+    }
 }

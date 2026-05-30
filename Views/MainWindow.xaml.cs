@@ -220,14 +220,24 @@ public partial class MainWindow : Window
     {
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title      = "Export Vault",
-            Filter     = "CSV (*.csv)|*.csv|Encrypted JSON (*.ivjson)|*.ivjson",
-            FileName   = $"illyrian-vault-export-{DateTime.Now:yyyy-MM-dd}",
+            Title            = "Export Vault",
+            Filter           = "CSV (*.csv)|*.csv|Encrypted JSON (*.ivjson)|*.ivjson",
+            FileName         = $"illyrian-vault-export-{DateTime.Now:yyyy-MM-dd}",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
         };
         if (dialog.ShowDialog() != true) return;
 
         if (dialog.FilterIndex == 1)
         {
+            var warn = MessageBox.Show(
+                "This file will contain ALL your passwords in plain text.\n\n" +
+                "Do NOT save it to a cloud-synced folder (OneDrive, Dropbox, Desktop on a managed PC).\n\n" +
+                "Are you sure you want to continue?",
+                "Illyrian Vault — Plain Text Export Warning",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (warn != MessageBoxResult.Yes) return;
+
             var rows = _vm.AllEntries.Select(evm =>
             {
                 var pw = evm.CurrentPayload is LoginPayload lp ? lp.Password : string.Empty;

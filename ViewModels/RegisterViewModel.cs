@@ -47,6 +47,11 @@ public partial class RegisterViewModel : BaseViewModel
     [NotifyCanExecuteChangedFor(nameof(NextCommand))]
     private string _username = string.Empty;
 
+    // SECURITY NOTE: NewPassword is a plain managed string — it cannot be zeroed.
+    // It exists here solely to drive the live strength-score animation on each keystroke.
+    // It is cleared (reference dropped) immediately after CreateVaultAsync completes.
+    // The derivation input (byte[] pwBytes) inside EncryptionService.DeriveKeyV2 is
+    // explicitly zeroed via CryptographicOperations.ZeroMemory in that method's finally block.
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StrengthScore))]
     [NotifyPropertyChangedFor(nameof(StrengthLabel))]
@@ -189,8 +194,13 @@ public partial class RegisterViewModel : BaseViewModel
             CryptographicOperations.ZeroMemory(key);
             await _db.SaveUserAsync(user);
 
+            // Zero the plain-string password fields as early as possible.
+            // The managed strings themselves cannot be zeroed (CLR immutability),
+            // but clearing the backing fields removes the last strong reference
+            // so the GC can collect them at the next opportunity.
             NewPassword     = string.Empty;
             ConfirmPassword = string.Empty;
+
             VaultCreated?.Invoke(Username);
         }
         catch (Exception ex)
