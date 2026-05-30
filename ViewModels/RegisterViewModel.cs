@@ -36,7 +36,8 @@ public partial class RegisterViewModel : BaseViewModel
     public bool   IsStep1    => CurrentStep == 1;
     public bool   IsStep2    => CurrentStep == 2;
     public bool   IsStep3    => CurrentStep == 3;
-    public string StepLabel  => $"{CurrentStep} / 3";
+    public string StepLabel  =>
+        $"{App.Localization["StepWord"]} {CurrentStep} {App.Localization["OfWord"]} 3";
 
     public string SummaryUsername  => Username;
     public string SummaryVaultPath => DatabaseService.GetDbPath(Username);
@@ -92,7 +93,16 @@ public partial class RegisterViewModel : BaseViewModel
             Filter     = "Text Files (*.txt)|*.txt",
         };
         if (dialog.ShowDialog() != true) return;
-        File.WriteAllText(dialog.FileName, RecoveryKey);
+        var content =
+            "╔══════════════════════════════════════════════════════════╗\n" +
+            "║          ILLYRIAN VAULT — RECOVERY KEY                  ║\n" +
+            "╚══════════════════════════════════════════════════════════╝\n\n" +
+            "⚠  Keep this file OFFLINE and in a secure location.\n" +
+            "   Anyone who has this key can reset your vault password.\n" +
+            "   Do NOT store it in a cloud-synced folder (OneDrive, Google Drive…).\n\n" +
+            $"Recovery key: {RecoveryKey}\n\n" +
+            $"Created: {DateTime.Now:yyyy-MM-dd HH:mm}\n";
+        File.WriteAllText(dialog.FileName, content);
         IsKeySaved = true;
     }
 

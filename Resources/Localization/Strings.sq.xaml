@@ -124,4 +124,43 @@
     <sys:String x:Key="SettingsThemeRed">Kuq e Zi</sys:String>
     <sys:String x:Key="SettingsDeveloper">Zhvilluar nga Orest Zogju</sys:String>
 
+    <!-- Card fields -->
+    <sys:String x:Key="FieldCardholderName">EMRI I MBAJTËSIT</sys:String>
+    <sys:String x:Key="FieldCardNumber">NUMRI I KARTËS</sys:String>
+    <sys:String x:Key="FieldExpiry">DATA E SKADENCËS (MM/VV)</sys:String>
+    <sys:String x:Key="FieldCvv">CVV</sys:String>
+
+    <!-- Card edit field labels (sentence case) -->
+    <sys:String x:Key="FieldCardholderNameEdit">Emri i mbajtësit</sys:String>
+    <sys:String x:Key="FieldCardNumberEdit">Numri i kartës</sys:String>
+    <sys:String x:Key="FieldExpiryEdit">Data e skadencës (MM/VV)</sys:String>
+    <sys:String x:Key="FieldCvvEdit">CVV</sys:String>
+
+    <!-- Identity fields -->
+    <sys:String x:Key="FieldFullName">EMRI I PLOTË</sys:String>
+    <sys:String x:Key="FieldEmail">EMAIL</sys:String>
+    <sys:String x:Key="FieldPhone">TELEFONI</sys:String>
+    <sys:String x:Key="FieldBirthdate">DATA E LINDJES</sys:String>
+    <sys:String x:Key="FieldAddress">ADRESA</sys:String>
+
+    <!-- Identity edit field labels (sentence case) -->
+    <sys:String x:Key="FieldFullNameEdit">Emri i plotë</sys:String>
+    <sys:String x:Key="FieldEmailEdit">Email</sys:String>
+    <sys:String x:Key="FieldPhoneEdit">Telefoni</sys:String>
+    <sys:String x:Key="FieldBirthdateEdit">Data e lindjes</sys:String>
+    <sys:String x:Key="FieldAddressEdit">Adresa</sys:String>
+
+    <!-- Recovery view -->
+    <sys:String x:Key="RecoveryStep1Title">Rikuperimi i Llogarisë</sys:String>
+    <sys:String x:Key="RecoveryStep1Sub">Shkruani emrin e përdoruesit për kasafortën që dëshironi të rikuperoni.</sys:String>
+    <sys:String x:Key="RecoveryStep2Title">Shkruani Çelësin e Rikuperimit</sys:String>
+    <sys:String x:Key="RecoveryStep2Sub">Shkruani çelësin e rikuperimit që keni ruajtur kur keni krijuar kasafortën tuaj.</sys:String>
+    <sys:String x:Key="RecoveryKeyLabel">Çelësi i Rikuperimit</sys:String>
+    <sys:String x:Key="RecoveryKeyFormat">Formati: ILVT-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX</sys:String>
+    <sys:String x:Key="RecoveryStep3Title">Vendosni Fjalëkalim të Ri</sys:String>
+    <sys:String x:Key="RecoveryResetButton">Rivendos Fjalëkalimin</sys:String>
+
+    <!-- Register step 3 -->
+    <sys:String x:Key="RegisterReadyTitle">Kasaforta juaj është gati.</sys:String>
+
 </ResourceDictionary>

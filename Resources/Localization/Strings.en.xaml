@@ -131,4 +131,43 @@
     <sys:String x:Key="SettingsThemeRed">Kuq e Zi</sys:String>
     <sys:String x:Key="SettingsDeveloper">Developed By Orest Zogju</sys:String>
 
+    <!-- Card fields -->
+    <sys:String x:Key="FieldCardholderName">CARDHOLDER NAME</sys:String>
+    <sys:String x:Key="FieldCardNumber">CARD NUMBER</sys:String>
+    <sys:String x:Key="FieldExpiry">EXPIRY (MM/YY)</sys:String>
+    <sys:String x:Key="FieldCvv">CVV</sys:String>
+
+    <!-- Card edit field labels (sentence case) -->
+    <sys:String x:Key="FieldCardholderNameEdit">Cardholder Name</sys:String>
+    <sys:String x:Key="FieldCardNumberEdit">Card Number</sys:String>
+    <sys:String x:Key="FieldExpiryEdit">Expiry (MM/YY)</sys:String>
+    <sys:String x:Key="FieldCvvEdit">CVV</sys:String>
+
+    <!-- Identity fields -->
+    <sys:String x:Key="FieldFullName">FULL NAME</sys:String>
+    <sys:String x:Key="FieldEmail">EMAIL</sys:String>
+    <sys:String x:Key="FieldPhone">PHONE</sys:String>
+    <sys:String x:Key="FieldBirthdate">BIRTHDATE</sys:String>
+    <sys:String x:Key="FieldAddress">ADDRESS</sys:String>
+
+    <!-- Identity edit field labels (sentence case) -->
+    <sys:String x:Key="FieldFullNameEdit">Full Name</sys:String>
+    <sys:String x:Key="FieldEmailEdit">Email</sys:String>
+    <sys:String x:Key="FieldPhoneEdit">Phone</sys:String>
+    <sys:String x:Key="FieldBirthdateEdit">Birthdate</sys:String>
+    <sys:String x:Key="FieldAddressEdit">Address</sys:String>
+
+    <!-- Recovery view -->
+    <sys:String x:Key="RecoveryStep1Title">Account Recovery</sys:String>
+    <sys:String x:Key="RecoveryStep1Sub">Enter the username for the vault you want to recover.</sys:String>
+    <sys:String x:Key="RecoveryStep2Title">Enter Recovery Key</sys:String>
+    <sys:String x:Key="RecoveryStep2Sub">Enter the recovery key you saved when you created your vault.</sys:String>
+    <sys:String x:Key="RecoveryKeyLabel">Recovery Key</sys:String>
+    <sys:String x:Key="RecoveryKeyFormat">Format: ILVT-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX</sys:String>
+    <sys:String x:Key="RecoveryStep3Title">Set New Password</sys:String>
+    <sys:String x:Key="RecoveryResetButton">Reset Password</sys:String>
+
+    <!-- Register step 3 -->
+    <sys:String x:Key="RegisterReadyTitle">Your vault is ready.</sys:String>
+
 </ResourceDictionary>

@@ -50,7 +50,14 @@ public partial class AddEntryViewModel : BaseViewModel
         _crypto     = crypto;
         _sessionKey = sessionKey;
         Generator   = new PasswordGeneratorViewModel();
-        Generator.PasswordAccepted += p => { if (CurrentPayload is LoginPayload lp) lp.Password = p; };
+        Generator.PasswordAccepted += p =>
+        {
+            if (CurrentPayload is LoginPayload lp)
+            {
+                lp.Password          = p;
+                Generator.IsExpanded = false;
+            }
+        };
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]

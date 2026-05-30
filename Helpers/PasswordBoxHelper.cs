@@ -81,6 +81,16 @@ public static class PasswordBoxHelper
     }
 
     // ── Legacy string mode ────────────────────────────────────────────────────
+    //
+    // THREAD-SAFETY: The old implementation used a single static bool `_updating`
+    // shared across every PasswordBox instance in the process.  If two PasswordBoxes
+    // fired PasswordChanged concurrently (or if future code opens two windows that
+    // both contain a PasswordBox), the flag could be read stale, causing either an
+    // infinite re-entry loop or a missed update.
+    //
+    // Fix: use a per-instance DependencyProperty (_IsUpdatingProperty) as the guard.
+    // Each PasswordBox carries its own flag on its own DependencyObject, so there is
+    // no shared mutable state between instances.
 
     public static readonly DependencyProperty BoundPasswordProperty =
         DependencyProperty.RegisterAttached(
@@ -92,7 +102,14 @@ public static class PasswordBoxHelper
             "BindPassword", typeof(bool), typeof(PasswordBoxHelper),
             new PropertyMetadata(false, OnBindPasswordChanged));
 
-    private static bool _updating;
+    // Per-instance re-entry guard — replaces the old static bool.
+    private static readonly DependencyProperty IsUpdatingProperty =
+        DependencyProperty.RegisterAttached(
+            "IsUpdating", typeof(bool), typeof(PasswordBoxHelper),
+            new PropertyMetadata(false));
+
+    private static bool  GetIsUpdating(DependencyObject d) => (bool)d.GetValue(IsUpdatingProperty);
+    private static void  SetIsUpdating(DependencyObject d, bool v) => d.SetValue(IsUpdatingProperty, v);
 
     public static string GetBoundPassword(DependencyObject d) =>
         (string)d.GetValue(BoundPasswordProperty);
@@ -106,7 +123,7 @@ public static class PasswordBoxHelper
 
     private static void OnBoundPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not PasswordBox box || _updating) return;
+        if (d is not PasswordBox box || GetIsUpdating(box)) return;
         box.Password = (string)e.NewValue;
     }
 
@@ -122,8 +139,8 @@ public static class PasswordBoxHelper
     private static void OnPasswordBoxChanged(object sender, RoutedEventArgs e)
     {
         if (sender is not PasswordBox box) return;
-        _updating = true;
+        SetIsUpdating(box, true);
         box.SetCurrentValue(BoundPasswordProperty, box.Password);
-        _updating = false;
+        SetIsUpdating(box, false);
     }
 }

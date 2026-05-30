@@ -32,7 +32,8 @@ public partial class RecoveryViewModel : BaseViewModel
     public bool   IsStep1   => CurrentStep == 1;
     public bool   IsStep2   => CurrentStep == 2;
     public bool   IsStep3   => CurrentStep == 3;
-    public string StepLabel => $"{CurrentStep} / 3";
+    public string StepLabel =>
+        $"{App.Localization["StepWord"]} {CurrentStep} {App.Localization["OfWord"]} 3";
 
     // ── Step 1: username ───────────────────────────────────────────────────────
     [ObservableProperty]
@@ -118,10 +119,12 @@ public partial class RecoveryViewModel : BaseViewModel
 
             try
             {
+                // Decrypt returns a hex string — convert to bytes immediately so the
+                // managed string (which cannot be zeroed) goes out of scope here.
+                // The raw byte[] is stored and zeroed in ResetPasswordAsync.
                 var masterKeyHex = _crypto.Decrypt(wrappedMasterKey, recoveryDerivedKey);
                 CryptographicOperations.ZeroMemory(recoveryDerivedKey);
-                // Stash the recovered master key hex for use in Step 3.
-                _recoveredMasterKeyHex = masterKeyHex;
+                _recoveredMasterKey = Convert.FromHexString(masterKeyHex);
             }
             catch
             {
@@ -135,7 +138,9 @@ public partial class RecoveryViewModel : BaseViewModel
         finally { IsBusy = false; }
     }
 
-    private string _recoveredMasterKeyHex = string.Empty;
+    // Stored as raw bytes so it can be zeroed with CryptographicOperations.ZeroMemory
+    // after use — a plain string cannot be zeroed on the managed heap.
+    private byte[]? _recoveredMasterKey;
 
     // ── Re-key the vault with the new master password ─────────────────────────
     private async Task ResetPasswordAsync()
@@ -143,10 +148,12 @@ public partial class RecoveryViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var metaPath      = DatabaseService.GetMetaPath(Username);
-            var lines         = (await File.ReadAllLinesAsync(metaPath)).ToList();
-            var oldMasterKey  = Convert.FromHexString(_recoveredMasterKeyHex);
-            _recoveredMasterKeyHex = string.Empty;
+            var metaPath     = DatabaseService.GetMetaPath(Username);
+            var lines        = (await File.ReadAllLinesAsync(metaPath)).ToList();
+            var oldMasterKey = _recoveredMasterKey
+                               ?? throw new InvalidOperationException("Recovered key is missing.");
+            // Clear reference immediately; the array is zeroed below after re-key completes.
+            _recoveredMasterKey = null;
 
             // Open DB with the recovered old master key.
             _db.SetProfile(Username);

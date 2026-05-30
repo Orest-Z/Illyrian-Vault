@@ -23,10 +23,6 @@ public partial class AuthViewModel : ObservableObject
     partial void OnCurrentLanguageChanged(string value) =>
         App.Localization.Apply(value == "SQ" ? AppLanguage.Sq : AppLanguage.En);
 
-    [RelayCommand]
-    private void ToggleLanguage() =>
-        CurrentLanguage = CurrentLanguage == "EN" ? "SQ" : "EN";
-
     // Carries the username to MainWindow on successful auth.
     public event Action<string>? LoginSucceeded;
 

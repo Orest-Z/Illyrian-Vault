@@ -151,7 +151,7 @@
     <DataTemplate x:Key="CardViewTemplate">
         <StackPanel>
             <!-- Cardholder Name -->
-            <TextBlock Text="CARDHOLDER NAME" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldCardholderName}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding CardholderName}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -162,7 +162,7 @@
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
             <!-- Card Number -->
-            <TextBlock Text="CARD NUMBER" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldCardNumber}" Style="{StaticResource FieldLabel}"/>
             <Grid Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -185,7 +185,7 @@
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
             <!-- Expiry -->
-            <TextBlock Text="EXPIRY (MM/YY)" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldExpiry}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding Expiry}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontMono}"
@@ -195,7 +195,7 @@
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
             <!-- CVV — masked by default; reveal/copy via icon buttons -->
-            <TextBlock Text="CVV" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldCvv}" Style="{StaticResource FieldLabel}"/>
             <Grid Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -243,23 +243,23 @@
 
     <DataTemplate x:Key="CardEditTemplate">
         <StackPanel>
-            <TextBlock Text="Cardholder Name" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldCardholderNameEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding CardholderName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="Card Number" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldCardNumberEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding CardNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      FontFamily="{StaticResource FontMono}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="Expiry (MM/YY)" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldExpiryEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding Expiry, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="CVV" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldCvvEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding Cvv, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,0"/>
@@ -270,7 +270,7 @@
 
     <DataTemplate x:Key="IdentityViewTemplate">
         <StackPanel>
-            <TextBlock Text="Full Name" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldFullName}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding FullName}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -280,7 +280,7 @@
 
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
-            <TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldEmail}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding Email}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -290,7 +290,7 @@
 
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
-            <TextBlock Text="Phone" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldPhone}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding Phone}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -300,7 +300,7 @@
 
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
-            <TextBlock Text="Birthdate" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldBirthdate}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding Birthdate}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -310,7 +310,7 @@
 
             <Border Height="1" Background="{DynamicResource BrushStrokeSubtle}" Margin="0,16"/>
 
-            <TextBlock Text="Address" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldAddress}" Style="{StaticResource FieldLabel}"/>
             <TextBlock Text="{Binding Address}"
                        Foreground="{DynamicResource BrushText}"
                        FontFamily="{StaticResource FontPrimary}"
@@ -322,27 +322,27 @@
 
     <DataTemplate x:Key="IdentityEditTemplate">
         <StackPanel>
-            <TextBlock Text="Full Name" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldFullNameEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding FullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldEmailEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="Phone" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldPhoneEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="Birthdate" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldBirthdateEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding Birthdate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,8,0,16"/>
 
-            <TextBlock Text="Address" Style="{StaticResource FieldLabel}"/>
+            <TextBlock Text="{DynamicResource FieldAddressEdit}" Style="{StaticResource FieldLabel}"/>
             <TextBox Style="{StaticResource InputBox}"
                      Text="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True"

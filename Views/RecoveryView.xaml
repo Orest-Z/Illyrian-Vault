@@ -12,6 +12,7 @@
     <UserControl.Resources>
         <conv:PasswordStrengthToBrushConverter x:Key="StrengthBrush"/>
         <conv:PasswordStrengthToBarConverter   x:Key="StrengthBar"/>
+        <conv:InverseBooleanConverter          x:Key="InvBool"/>
     </UserControl.Resources>
 
     <Grid>
@@ -64,14 +65,14 @@
 
             <!-- Step 1: Username -->
             <StackPanel Visibility="{Binding IsStep1, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Account Recovery"
+                <TextBlock Text="{DynamicResource RecoveryStep1Title}"
                            Foreground="{DynamicResource BrushText}"
                            FontFamily="{StaticResource FontPrimary}"
                            FontSize="{StaticResource FontCardHead}"
                            FontWeight="SemiBold"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,8"/>
-                <TextBlock Text="Enter the username for the vault you want to recover."
+                <TextBlock Text="{DynamicResource RecoveryStep1Sub}"
                            Foreground="{DynamicResource BrushTextSecondary}"
                            FontFamily="{StaticResource FontPrimary}"
                            FontSize="{StaticResource FontBody}"
@@ -87,14 +88,14 @@
 
             <!-- Step 2: Recovery key -->
             <StackPanel Visibility="{Binding IsStep2, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Enter Recovery Key"
+                <TextBlock Text="{DynamicResource RecoveryStep2Title}"
                            Foreground="{DynamicResource BrushText}"
                            FontFamily="{StaticResource FontPrimary}"
                            FontSize="{StaticResource FontCardHead}"
                            FontWeight="SemiBold"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,8"/>
-                <TextBlock Text="Enter the recovery key you saved when you created your vault."
+                <TextBlock Text="{DynamicResource RecoveryStep2Sub}"
                            Foreground="{DynamicResource BrushTextSecondary}"
                            FontFamily="{StaticResource FontPrimary}"
                            FontSize="{StaticResource FontBody}"
@@ -102,12 +103,12 @@
                            HorizontalAlignment="Center"
                            Margin="0,0,0,24"/>
 
-                <TextBlock Text="Recovery Key" Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                <TextBlock Text="{DynamicResource RecoveryKeyLabel}" Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
                 <PasswordBox Style="{StaticResource PasswordInput}"
                              helpers:PasswordBoxHelper.BindPassword="True"
                              helpers:PasswordBoxHelper.BoundPassword="{Binding RecoveryKeyInput, Mode=TwoWay}"
                              Margin="0,0,0,8"/>
-                <TextBlock Text="Format: ILVT-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                <TextBlock Text="{DynamicResource RecoveryKeyFormat}"
                            Foreground="{DynamicResource BrushTextTertiary}"
                            FontFamily="{StaticResource FontMono}"
                            FontSize="{StaticResource FontSmall}"/>
@@ -115,7 +116,7 @@
 
             <!-- Step 3: New password -->
             <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Set New Password"
+                <TextBlock Text="{DynamicResource RecoveryStep3Title}"
                            Foreground="{DynamicResource BrushText}"
                            FontFamily="{StaticResource FontPrimary}"
                            FontSize="{StaticResource FontCardHead}"
@@ -181,6 +182,7 @@
             </Grid.ColumnDefinitions>
             <Button Style="{StaticResource BtnSecondary}"
                     Command="{Binding BackCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
                     Margin="0,0,8,0">
                 <Button.Content>
                     <TextBlock>
@@ -200,15 +202,21 @@
             <Button Grid.Column="1"
                     Style="{StaticResource BtnPrimary}"
                     Command="{Binding NextCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
                     Margin="8,0,0,0">
                 <Button.Content>
+                    <!-- Show label normally; swap to "Working…" while IsBusy -->
                     <TextBlock>
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text" Value="{DynamicResource ContinueButton}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsStep3}" Value="True">
-                                        <Setter Property="Text" Value="Reset Password"/>
+                                        <Setter Property="Text" Value="{DynamicResource RecoveryResetButton}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                        <Setter Property="Text" Value="Working…"/>
+                                        <Setter Property="FontStyle" Value="Italic"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

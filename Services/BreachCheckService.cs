@@ -19,7 +19,7 @@ public static class BreachCheckService
     static BreachCheckService()
     {
         _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        _client.DefaultRequestHeaders.UserAgent.ParseAdd("IllyrianVault/1.0");
+        _client.DefaultRequestHeaders.UserAgent.ParseAdd("IllyrianVault/1.5");
     }
 
     public record Result(bool IsBreached, bool IsNetworkUnavailable, int BreachCount, string Message);

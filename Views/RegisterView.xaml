@@ -148,7 +148,7 @@
 
             <!-- Step 3: Summary -->
             <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Your vault is ready."
+                <TextBlock Text="{DynamicResource RegisterReadyTitle}"
                            FontSize="{StaticResource FontSectionHead}"
                            FontFamily="{StaticResource FontPrimary}"
                            Foreground="{DynamicResource BrushText}"

@@ -3,6 +3,7 @@
  * Illyrian Vault - Local & Encrypted Password Manager
  * Unauthorized copying of this file is strictly prohibited.
  * ======================================================= */
+using System.IO;
 using System.Windows;
 using IllyrianVault.Services;
 
@@ -68,12 +69,32 @@ public partial class App : Application
         auth.Show();
     }
 
-    private static void LogOrShow(string? message) =>
+    private static void LogOrShow(string? message)
+    {
+        // Write the full details (stack trace etc.) to a local log file.
+        // The user never sees raw exception strings — only a safe generic message.
+        try
+        {
+            var logDir  = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "IllyriaVault", "Logs");
+            Directory.CreateDirectory(logDir);
+            var logFile = Path.Combine(logDir, $"error-{DateTime.Now:yyyy-MM-dd}.log");
+            File.AppendAllText(logFile,
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]{Environment.NewLine}" +
+                $"{message ?? "Unknown error"}{Environment.NewLine}" +
+                $"{"─".PadRight(80, '─')}{Environment.NewLine}");
+        }
+        catch { /* log write failed — best effort only */ }
+
         MessageBox.Show(
-            message ?? "An unknown error occurred.",
+            "An unexpected error occurred. Illyrian Vault will try to continue.\n\n" +
+            "If the problem persists, details have been written to:\n" +
+            $"%LOCALAPPDATA%\\IllyriaVault\\Logs",
             "Illyrian Vault — Unexpected Error",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
+    }
 
     protected override async void OnExit(ExitEventArgs e)
     {

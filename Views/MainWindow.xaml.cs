@@ -265,7 +265,7 @@ public partial class MainWindow : Window
         var fadeIn  = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
         var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300))
         {
-            BeginTime = TimeSpan.FromMilliseconds(900),
+            BeginTime = TimeSpan.FromMilliseconds(1500),
         };
 
         var storyboard = new Storyboard();
