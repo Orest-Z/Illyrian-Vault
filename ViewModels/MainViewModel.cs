@@ -318,10 +318,23 @@ public partial class EntryViewModel : ObservableObject
         _isFavorite = model.IsFavorite;
 
         Generator = new PasswordGeneratorViewModel();
-        Generator.PasswordAccepted += pw =>
+
+        // "Use This Password" / "Përdor Këtë Fjalëkalim":
+        //   1. Inject the generated password into the LoginPayload field.
+        //   2. Collapse the generator accordion.
+        //   3. Save — archives old password to history, persists to DB, exits
+        //      edit mode, refreshes the list row, and fires SaveCompleted so
+        //      the window shows the "Saved ✓" / "Ruajtur ✓" toast.
+        // async void is intentional here: PasswordAccepted is Action<string>,
+        // not Func<string,Task>, so this is the standard event-handler pattern.
+        Generator.PasswordAccepted += async pw =>
         {
             if (CurrentPayload is LoginPayload lp)
-                lp.Password = pw;
+            {
+                lp.Password          = pw;
+                Generator.IsExpanded = false;   // collapse the accordion
+                await SaveAsync();              // save + exit edit mode + toast
+            }
         };
     }
 }
