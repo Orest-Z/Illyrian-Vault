@@ -150,6 +150,15 @@ public sealed class DatabaseService : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Re-encrypts the SQLCipher database with a new raw 32-byte key.
+    /// Must be called while the connection is open with the OLD key.
+    /// </summary>
+    public async Task RekeyAsync(byte[] newKey)
+    {
+        await ExecAsync(SecureMemory.BuildSqlCipherRekeyPragma(newKey));
+    }
+
     // ── Schema ─────────────────────────────────────────────────────────────────
 
     private async Task CreateSchemaAsync()
@@ -331,6 +340,30 @@ public sealed class DatabaseService : IAsyncDisposable
                 CreatedAt         = DateTime.Parse(reader.GetString(reader.GetOrdinal("CreatedAt"))),
             });
         return list;
+    }
+
+    public async Task<List<IllyrianVault.Models.PasswordHistory>> GetAllPasswordHistoryAsync()
+    {
+        var list = new List<IllyrianVault.Models.PasswordHistory>();
+        await using var cmd    = Cmd("SELECT * FROM PasswordHistory;");
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            list.Add(new IllyrianVault.Models.PasswordHistory
+            {
+                Id                = reader.GetInt64(reader.GetOrdinal("Id")),
+                EntryId           = reader.GetInt64(reader.GetOrdinal("EntryId")),
+                EncryptedPassword = reader.GetString(reader.GetOrdinal("EncryptedPassword")),
+                CreatedAt         = DateTime.Parse(reader.GetString(reader.GetOrdinal("CreatedAt"))),
+            });
+        return list;
+    }
+
+    public async Task UpdatePasswordHistoryEncryptedValueAsync(long id, string encryptedPassword)
+    {
+        await ExecAsync(
+            "UPDATE PasswordHistory SET EncryptedPassword = @Pw WHERE Id = @Id;",
+            P("@Pw", encryptedPassword),
+            P("@Id", id));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

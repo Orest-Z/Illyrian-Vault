@@ -18,7 +18,7 @@
     <sys:String x:Key="MasterPassword">Fjalëkalimi Kryesor</sys:String>
     <sys:String x:Key="MasterPlaceholder">Shkruani fjalëkalimin kryesor</sys:String>
     <sys:String x:Key="UnlockButton">Hap Kasafortën</sys:String>
-    <sys:String x:Key="ForgotPassword">Harruat fjalëkalimin?</sys:String>
+    <sys:String x:Key="ForgotPassword">Keni harruar fjalëkalimin?</sys:String>
     <sys:String x:Key="CreateVault">Krijo kasafortë të re</sys:String>
 
     <sys:String x:Key="Username">Emri i përdoruesit</sys:String>

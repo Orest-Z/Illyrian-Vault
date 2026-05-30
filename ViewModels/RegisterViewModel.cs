@@ -162,6 +162,15 @@ public partial class RegisterViewModel : BaseViewModel
             var key        = _crypto.DeriveKeyV2(NewPassword, salt);
             var verifyHash = _crypto.CreateVerificationHash(key);
 
+            // Wrap the master key so the recovery flow can unwrap it without knowing the password.
+            var recoverySalt       = _crypto.GenerateSalt();
+            var recoveryKeyBytes   = System.Text.Encoding.UTF8.GetBytes(RecoveryKey);
+            var recoveryDerivedKey = Rfc2898DeriveBytes.Pbkdf2(
+                recoveryKeyBytes, recoverySalt, 600_000, HashAlgorithmName.SHA512, 32);
+            System.Security.Cryptography.CryptographicOperations.ZeroMemory(recoveryKeyBytes);
+            var wrappedMasterKey   = _crypto.Encrypt(Convert.ToHexString(key), recoveryDerivedKey);
+            System.Security.Cryptography.CryptographicOperations.ZeroMemory(recoveryDerivedKey);
+
             var profileDir = DatabaseService.GetProfileDir(Username);
             var metaPath   = DatabaseService.GetMetaPath(Username);
             Directory.CreateDirectory(profileDir);
@@ -172,6 +181,8 @@ public partial class RegisterViewModel : BaseViewModel
                 "v2",   // SHA-512 PBKDF2; read by LoginViewModel to choose DeriveKeyV2
                 "0",    // consecutive failures (initial)
                 "0",    // lockout until ticks (initial)
+                Convert.ToBase64String(recoverySalt),
+                wrappedMasterKey,
             ]);
 
             var user = new VaultUser

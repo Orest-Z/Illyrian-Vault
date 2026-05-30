@@ -19,6 +19,7 @@ public partial class LoginViewModel : BaseViewModel
 
     public event Action<string>? LoginSucceeded;
     public event Action?         NavigateToRegister;
+    public event Action?         NavigateToRecovery;
 
     // ── Brute-force defence ────────────────────────────────────────────────────
     // Progressive exponential backoff:
@@ -297,6 +298,9 @@ public partial class LoginViewModel : BaseViewModel
 
     [RelayCommand]
     private void NavigateRegister() => NavigateToRegister?.Invoke();
+
+    [RelayCommand]
+    private void ForgotPassword() => NavigateToRecovery?.Invoke();
 
     [RelayCommand]
     private void Exit() => System.Windows.Application.Current.Shutdown();

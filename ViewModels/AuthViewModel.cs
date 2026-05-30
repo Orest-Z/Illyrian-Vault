@@ -35,6 +35,7 @@ public partial class AuthViewModel : ObservableObject
         var vm = new LoginViewModel(_crypto, _db);
         vm.LoginSucceeded     += username => LoginSucceeded?.Invoke(username);
         vm.NavigateToRegister += ShowRegister;
+        vm.NavigateToRecovery += ShowRecovery;
         CurrentViewModel = vm;
     }
 
@@ -43,6 +44,14 @@ public partial class AuthViewModel : ObservableObject
         var vm = new RegisterViewModel(_crypto, _db);
         vm.VaultCreated    += username => LoginSucceeded?.Invoke(username);
         vm.NavigateToLogin += ShowLogin;
+        CurrentViewModel = vm;
+    }
+
+    public void ShowRecovery()
+    {
+        var vm = new RecoveryViewModel(_crypto, _db);
+        vm.RecoverySucceeded += username => LoginSucceeded?.Invoke(username);
+        vm.NavigateToLogin   += ShowLogin;
         CurrentViewModel = vm;
     }
 }

@@ -195,6 +195,12 @@
                          helpers:PasswordBoxHelper.BindSecurePassword="True"
                          helpers:PasswordBoxHelper.SecurePassword="{Binding SecurePassword, Mode=TwoWay}"/>
 
+            <Button Style="{StaticResource BtnSecondary}"
+                    Content="{DynamicResource ForgotPassword}"
+                    HorizontalAlignment="Right"
+                    Margin="0,4,0,0"
+                    Command="{Binding ForgotPasswordCommand}"/>
+
             <!-- Error message -->
             <TextBlock Text="{Binding ErrorMessage}"
                        Foreground="{DynamicResource BrushDanger}"

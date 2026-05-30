@@ -221,4 +221,7 @@ public static class SecureMemory
     /// </summary>
     public static string BuildSqlCipherKeyPragma(ReadOnlySpan<byte> rawKey) =>
         $"PRAGMA key = \"x'{Convert.ToHexString(rawKey).ToLowerInvariant()}'\";";
+
+    public static string BuildSqlCipherRekeyPragma(ReadOnlySpan<byte> newKey) =>
+        $"PRAGMA rekey = \"x'{Convert.ToHexString(newKey).ToLowerInvariant()}'\";";
 }
