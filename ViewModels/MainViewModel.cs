@@ -117,7 +117,26 @@ public partial class EntryViewModel : ObservableObject
             case LoginPayload lp:
                 Model.Username = lp.Username;
                 if (!string.IsNullOrEmpty(lp.Password))
+                {
+                    // Archive the current password in history BEFORE overwriting it.
+                    // Only archive if there is an existing password to save and the
+                    // plaintext actually changed (avoids duplicate history rows on
+                    // saves where the user didn't touch the password field).
+                    if (!string.IsNullOrEmpty(Model.EncryptedPassword))
+                    {
+                        var oldPlain = _crypto.Decrypt(Model.EncryptedPassword, _key);
+                        if (oldPlain != lp.Password)
+                            await _db.InsertPasswordHistoryAsync(Model.Id, Model.EncryptedPassword);
+                    }
+
                     Model.EncryptedPassword = _crypto.Encrypt(lp.Password, _key);
+
+                    // If the history panel was already loaded (open or previously viewed),
+                    // refresh it so the new row appears immediately without requiring
+                    // the user to close and re-open the panel.
+                    if (ShowHistory || History.Count > 0)
+                        await LoadHistoryAsync();
+                }
                 Model.Url   = lp.Url;
                 Model.Notes = lp.Notes;
                 break;
