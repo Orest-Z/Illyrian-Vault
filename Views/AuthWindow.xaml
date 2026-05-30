@@ -9,6 +9,7 @@
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:vm="clr-namespace:IllyrianVault.ViewModels"
         xmlns:views="clr-namespace:IllyrianVault.Views"
+        xmlns:conv="clr-namespace:IllyrianVault.Converters"
         Title="Illyrian Vault"
         Icon="/IllyrianVault.png"
         WindowStyle="None"
@@ -20,6 +21,7 @@
         MinWidth="700" MinHeight="500">
 
     <Window.Resources>
+        <conv:EqualityConverter x:Key="EqConv"/>
         <DataTemplate DataType="{x:Type vm:LoginViewModel}">
             <views:LoginView/>
         </DataTemplate>
@@ -84,17 +86,21 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Language toggle -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                HorizontalAlignment="Right" VerticalAlignment="Center"
-                                Margin="0,0,12,0">
-                        <Button Style="{StaticResource BtnSecondary}"
-                                Content="{Binding CurrentLanguage}"
-                                Command="{Binding ToggleLanguageCommand}"
-                                Padding="10,3"
-                                FontSize="11"
-                                FontWeight="SemiBold"/>
-                    </StackPanel>
+                    <!-- Language segmented toggle -->
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource BrushElevated}"
+                            BorderBrush="{DynamicResource BrushStroke}"
+                            BorderThickness="1" CornerRadius="8"
+                            Padding="2" Height="28"
+                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource SegButton}" Content="EN" GroupName="AuthLangSel"
+                                         IsChecked="{Binding CurrentLanguage, Converter={StaticResource EqConv}, ConverterParameter=EN}"/>
+                            <RadioButton Style="{StaticResource SegButton}" Content="SQ" GroupName="AuthLangSel"
+                                         IsChecked="{Binding CurrentLanguage, Converter={StaticResource EqConv}, ConverterParameter=SQ}"/>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Window controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">

@@ -107,9 +107,11 @@
         </Border>
 
         <!-- ── Right form panel ────────────────────────────────────────────── -->
-        <StackPanel Grid.Column="1"
-                    VerticalAlignment="Center"
-                    Margin="0,8,40,24">
+        <ScrollViewer Grid.Column="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="0,8,40,24">
+        <StackPanel VerticalAlignment="Center">
 
             <!-- Title + subtitle -->
             <TextBlock Text="{DynamicResource LoginWelcome}"
@@ -253,5 +255,6 @@
                 </StackPanel>
             </Button>
         </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>
