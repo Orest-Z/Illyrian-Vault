@@ -15,6 +15,29 @@ No cloud. No accounts. No tracking. Your data never leaves your machine.
 
 ---
 
+## Download & Install
+
+> **First time here? Always download the ZIP — not the bare `.exe`.**
+> The ZIP contains the app, the auto-updater, the README, and the license.
+> The standalone `Illyrian.Vault.exe` asset is only used by the updater internally.
+
+### New Users
+
+1. Go to the [latest release](../../releases/latest)
+2. Download **`IllyrianVault-v1.5.5-win-x64.zip`**
+3. Extract the folder anywhere you like — Desktop, Documents, a USB drive
+4. Run **`Illyrian Vault.exe`**
+5. Click **Create a Vault**, set your master password, and save your Recovery Key
+
+No installation, no admin rights, no .NET required.
+
+### Existing Users — Update
+
+Run **`Updater.exe`** (included in the ZIP you originally downloaded).
+It will check GitHub for the latest version, download it, swap the exe, and relaunch automatically.
+
+---
+
 ## Screenshots
 
 <table>
