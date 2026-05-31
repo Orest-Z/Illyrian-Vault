@@ -72,9 +72,7 @@ It will check GitHub for the latest version, download it, swap the exe, and rela
 ## Demo
 
 <div align="center">
-  <video src="assets/Illyrian%20Vault.mp4" controls width="85%">
-    Your browser does not support the video tag.
-  </video>
+  <img src="assets/IlllyrianVault.gif" alt="Illyrian Vault Demo" width="85%"/>
   <br/>
   <sub>Full walkthrough — login, adding entries, password generator, clipboard guard, theme switching, and auto-lock.</sub>
 </div>
