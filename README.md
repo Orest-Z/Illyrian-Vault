@@ -15,6 +15,37 @@ No cloud. No accounts. No tracking. Your data never leaves your machine.
 
 ---
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/preview1.JPG" alt="Login Screen" width="100%"/>
+      <br/>
+      <sub><b>Login Screen</b> — Multi-profile selector, master password entry, and key security specs shown at a glance.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/preview2.JPG" alt="Vault Dashboard" width="100%"/>
+      <br/>
+      <sub><b>Vault Dashboard</b> — Full entry list with category sidebar, search, sort, and a detailed entry panel with password history.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/preview3.JPG" alt="New Entry Dialog" width="100%"/>
+      <br/>
+      <sub><b>New Entry Dialog</b> — Add Logins, Secure Notes, Cards, or Identities. Shown here in Albanian (Shqip) with the Card form.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/preview4.JPG" alt="Settings Panel" width="100%"/>
+      <br/>
+      <sub><b>Settings Panel</b> — Switch themes (Light / Dark / Kuq e Zi), change language, configure auto-lock timeout, and export your vault.</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## What is Illyrian Vault?
 
 Illyrian Vault is a free, portable password manager built for Windows. Everything is stored locally in a fully encrypted database — there is no server, no sync service, and no internet requirement. The master password never leaves your device.
