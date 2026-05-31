@@ -1,105 +1,142 @@
-# Illyria-Vault
+<div align="center">
 
-A C# windows desktop app to store passwords locally.
+# 🔐 Illyrian Vault
 
+**A local, offline, fully encrypted password manager for Windows.**
 
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║    ██╗██╗     ██╗  ██╗   ██╗██████╗ ██╗ █████╗ ███╗   ██╗                    ║
-║    ██║██║     ██║  ╚██╗ ██╔╝██╔══██╗██║██╔══██╗████╗  ██║                    ║
-║    ██║██║     ██║   ╚████╔╝ ██████╔╝██║███████║██╔██╗ ██║                    ║
-║    ██║██║     ██║    ╚██╔╝  ██╔══██╗██║██╔══██║██║╚██╗██║                    ║
-║    ██║███████╗███████╗██║   ██║  ██║██║██║  ██║██║ ╚████║                    ║
-║    ╚═╝╚══════╝╚══════╝╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝                    ║
-║                                                                              ║
-║        ██╗   ██╗ █████╗ ██╗   ██╗██╗  ████████╗                              ║
-║        ██║   ██║██╔══██╗██║   ██║██║  ╚══██╔══╝                              ║
-║        ██║   ██║███████║██║   ██║██║     ██║                                 ║
-║        ╚██╗ ██╔╝██╔══██║██║   ██║██║     ██║                                 ║
-║         ╚████╔╝ ██║  ██║╚██████╔╝███████╗██║                                 ║
-║          ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝                                 ║
-║                                                                              ║
-║                 Local. Offline. Encrypted. Yours.                            ║
-║                                                                              ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║  Version  :  1.5.5                                                           ║
-║  Platform :  Windows 10 / 11  (x64)                                          ║
-║  Author   :  Orest Zogju                                                     ║
-║  Contact  :  orestzogju@gmail.com                                            ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+No cloud. No accounts. No tracking. Your data never leaves your machine.
 
+![Version](https://img.shields.io/badge/version-1.5.5-crimson?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-blue?style=flat-square)
+![License](https://img.shields.io/badge/license-Source%20Available-orange?style=flat-square)
+![Framework](https://img.shields.io/badge/.NET-10.0%20WPF-purple?style=flat-square)
 
-  ──────────────────────────────────────────────────────────────────────────
-   WHAT IS ILLYRIAN VAULT?
-  ──────────────────────────────────────────────────────────────────────────
+</div>
 
-  Illyrian Vault is a free, offline password manager for Windows.
-  Your data never leaves your device — no cloud, no accounts, no tracking.
+---
 
-  All passwords are protected by:
-    • AES-256-GCM  field-level encryption
-    • SQLCipher    full-database encryption
-    • PBKDF2-SHA512  (600,000 iterations) master key derivation
+## What is Illyrian Vault?
 
+Illyrian Vault is a free, portable password manager built for Windows. Everything is stored locally in a fully encrypted database — there is no server, no sync service, and no internet requirement. The master password never leaves your device.
 
-  ──────────────────────────────────────────────────────────────────────────
-   QUICK START
-  ──────────────────────────────────────────────────────────────────────────
+Built with a security-first design and a clean, modern UI.
 
-  1.  Run IllyrianVault.exe — no installation required.
+---
 
-  2.  Click "Create a Vault" and choose a strong master password.
-      → Save your Recovery Key somewhere safe (printed or on a USB).
-        Lose it and your password cannot be reset if you forget it.
+## Features
 
-  3.  Add entries: Logins, Cards, Notes, Identities.
+- **AES-256-GCM** field-level encryption on every password entry
+- **SQLCipher** full-database encryption — the `.db` file is unreadable without your master password
+- **PBKDF2-SHA512** key derivation at 600,000 iterations (OWASP 2023 standard)
+- **Multiple entry types** — Logins, Credit Cards, Secure Notes, Identities
+- **Password Generator** with configurable length, character sets, and live strength scoring
+- **HaveIBeenPwned** breach check via k-anonymity — your password is never sent over the wire
+- **Password History** — every changed password is archived and viewable per entry
+- **Idle auto-lock** — vault locks automatically after configurable inactivity timeout
+- **Clipboard guard** — copied passwords are auto-wiped from the clipboard after 15 seconds
+- **Recovery Key** — 128-bit random key lets you reset your master password without losing data
+- **Multi-profile support** — multiple local vaults on one machine, each fully isolated
+- **Export** — encrypted JSON backup or plain-text CSV (with explicit warning)
+- **Themes** — Red (Kuq e Zi), Dark, and Light
+- **Bilingual** — English and Albanian (Shqip)
+- **Portable** — single `.exe`, no installer, no registry entries
 
-  4.  Use the Generator to create strong passwords on the fly.
+---
 
-  5.  The vault auto-locks after 5 minutes of inactivity (adjustable
-      in Settings).
+## Security Architecture
 
+| Layer | Implementation |
+|---|---|
+| Master key derivation | PBKDF2-SHA512, 600,000 iterations, 256-bit salt |
+| Database encryption | SQLCipher AES-256-CBC, HMAC-SHA512 page authentication |
+| Field encryption | AES-256-GCM, fresh 96-bit nonce per value |
+| Password verification | SHA-256(derivedKey ‖ "ILLYRIA_VERIFY"), fixed-time compare |
+| Recovery key wrapping | PBKDF2-SHA512 → AES-256-GCM wrapped master key |
+| Brute-force protection | Exponential backoff + 5-minute hard lockout after 10 failures |
+| Memory safety | Pinned byte arrays, `CryptographicOperations.ZeroMemory` on dispose |
+| Clipboard | SHA-256 ownership hash, auto-wipe after 15 seconds |
+| Breach check | HIBP k-anonymity — only 5-char SHA-1 prefix sent, never the password |
 
-  ──────────────────────────────────────────────────────────────────────────
-   WHERE IS MY DATA STORED?
-  ──────────────────────────────────────────────────────────────────────────
+The master password is extracted from WPF's `SecureString` via `Marshal.SecureStringToBSTR` directly into a pinned UTF-8 buffer. It is never materialized as a managed `System.String`.
 
-    %LOCALAPPDATA%\IllyriaVault\Profiles\<username>\vault.db
+---
 
-  To back up your vault, copy that folder to a USB drive or external disk.
-  The vault.db file is encrypted — it is safe to store on any medium.
+## Requirements
 
+- Windows 10 or Windows 11 (x64)
+- No .NET installation required — the runtime is bundled inside the executable
 
-  ──────────────────────────────────────────────────────────────────────────
-   UNINSTALLING
-  ──────────────────────────────────────────────────────────────────────────
+---
 
-  Illyrian Vault writes nothing to the Windows Registry.
-  To remove it completely:
+## Getting Started
 
-    1. Delete  IllyrianVault.exe
-    2. Delete  %LOCALAPPDATA%\IllyriaVault\   (this removes your vault data)
+1. Download `Illyrian Vault.exe` from the [Releases](../../releases) page
+2. Run it — no installation needed
+3. Click **Create a Vault** and choose a strong master password
+4. **Save your Recovery Key** in a safe, offline location — printed or on a USB drive
+5. Start adding entries
 
+> Your vault is stored at `%LOCALAPPDATA%\IllyriaVault\Profiles\<username>\vault.db`
+>
+> Back it up by copying that folder to an external drive. The file is encrypted — it is safe to store on any medium.
 
-  ──────────────────────────────────────────────────────────────────────────
-   LICENSE & COPYRIGHT
-  ──────────────────────────────────────────────────────────────────────────
+---
 
-  Copyright (c) 2026 Orest Zogju. All Rights Reserved.
-  The name "Illyrian Vault" is the exclusive intellectual property of
-  Orest Zogju and may not be used in any derivative or competing product.
+## Building from Source
 
-  This software is provided free of charge under a custom
-  Source Available License (Personal, Non-Commercial Use Only).
+```powershell
+git clone https://github.com/Orest-Z/Illyria-Vault.git
+cd Illyria-Vault
+dotnet publish -c Release -r win-x64 --self-contained true `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:AssemblyName="Illyrian Vault" `
+    -o ./publish
+```
 
-  You may download, view, compile, and run it for personal use.
-  You may NOT redistribute, sell, sublicense, or publish modified
-  versions — public or private — without written permission from the author.
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
-  Full terms: see the LICENSE file included in this package.
+---
 
+## Uninstalling
 
-╔══════════════════════════════════════════════════════════════════════════════╗
-║   "Your secrets, encrypted with iron — stored only on your machine."         ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+Illyrian Vault writes nothing to the Windows Registry. To remove it completely:
+
+1. Delete `Illyrian Vault.exe`
+2. Delete `%LOCALAPPDATA%\IllyriaVault\` *(back up your vault first if you want to keep your data)*
+
+---
+
+## Tech Stack
+
+| Package | Purpose |
+|---|---|
+| .NET 10 WPF | UI framework |
+| CommunityToolkit.Mvvm 8.4 | MVVM source generators |
+| Microsoft.Data.Sqlite.Core | SQLite ADO.NET driver |
+| SQLitePCLRaw.bundle_e_sqlcipher | SQLCipher AES-256 encryption |
+| MahApps.Metro.IconPacks.Material | Material Design icons |
+
+---
+
+## License & Copyright
+
+Copyright (c) 2026 **Orest Zogju**. All Rights Reserved.
+
+The name **"Illyrian Vault"** and its associated branding are the exclusive intellectual property of Orest Zogju and may not be used in any derivative or competing product.
+
+This project is **source available** — you may view and run it for personal, non-commercial use. You may **not** redistribute, resell, sublicense, or publish modified versions without written permission from the author. See the [LICENSE](LICENSE) file for full terms.
+
+---
+
+## Author
+
+**Orest Zogju**
+📧 orestzogju@gmail.com
+
+---
+
+<div align="center">
+  <i>"Your secrets, encrypted with iron — stored only on your machine."</i>
+</div>
 
