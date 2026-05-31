@@ -1,0 +1,65 @@
+Illyrian Vault
+Copyright (c) 2026 Orest Zogju. All Rights Reserved.
+
+The name "Illyrian Vault" and its associated logo are the exclusive intellectual
+property of Orest Zogju. No permission is granted to use the name, logo, or
+branding of this project in any derivative work, distribution, or product.
+
+SOURCE AVAILABLE LICENSE (PERSONAL, NON-COMMERCIAL USE ONLY)
+
+Permission is hereby granted to any person obtaining a copy of this software
+and its associated source code files (the "Software"), to download, view,
+compile, and run the Software solely for personal, non-commercial purposes,
+under the following terms:
+
+1. ATTRIBUTION
+   You must retain the original copyright notice, the author credit
+   (Orest Zogju), and this license text in all copies or substantial
+   portions of the Software, including any modified versions kept for
+   private use. Removing, altering, or obscuring any copyright notice
+   is a violation of this license.
+
+2. NON-COMMERCIAL USE ONLY
+   You may not use this Software, its source code, or any executables
+   compiled from it for commercial purposes, financial gain, or as part
+   of a paid, monetized, or subscription-based product or service of
+   any kind — whether charged directly, indirectly, or through
+   advertising revenue.
+
+3. NO PUBLIC DISTRIBUTION OR DERIVATIVES
+   You may modify the source code for your own private, personal use.
+   You may NOT:
+     a) distribute, publish, upload, sub-license, rent, or sell
+        unmodified copies of this Software or its source code;
+     b) distribute, publish, upload, sub-license, rent, or sell
+        modified versions (derivatives) of this Software or its source;
+     c) fork or mirror this repository on any public platform in a way
+        that implies ownership, replacement, or an alternative version
+        of this Software.
+
+4. REVERSE ENGINEERING
+   You may not reverse engineer, decompile, disassemble, or otherwise
+   attempt to derive the source code from compiled binaries of this
+   Software for the purpose of commercial use, exploitation, or
+   redistribution.
+
+5. ENFORCEMENT
+   Any use of this Software outside the permissions explicitly granted
+   above constitutes copyright infringement and a breach of this
+   license. The author reserves the right to pursue all available
+   legal remedies, including injunctive relief and damages, under
+   applicable copyright law.
+
+6. GOVERNING LAW
+   This license shall be governed by and construed in accordance with
+   the laws of the jurisdiction in which the copyright holder resides,
+   without regard to its conflict of law provisions.
+
+DISCLAIMER OF WARRANTY:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
