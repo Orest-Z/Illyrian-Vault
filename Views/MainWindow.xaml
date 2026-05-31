@@ -16,7 +16,10 @@
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Width="1320" Height="800"
-        MinWidth="900" MinHeight="600">
+        MinWidth="900" MinHeight="600"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        RenderOptions.BitmapScalingMode="HighQuality">
 
     <Window.Resources>
         <conv:EqualityConverter      x:Key="EqConv"/>

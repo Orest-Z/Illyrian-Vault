@@ -15,6 +15,23 @@
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>IllyrianVault.ico</ApplicationIcon>
+
+    <!-- ── Release publish optimizations ─────────────────────────────────────
+         PublishReadyToRun: pre-JITs all IL to native code at publish time.
+           Effect: eliminates cold-JIT cost on startup — biggest single win
+           for first meaningful paint. Adds ~20-40% to the .exe size, which
+           is fine for a desktop app.
+
+         TieredPGO: profile-guided optimization across hot paths discovered
+           at runtime. Works on top of R2R — the runtime re-optimizes the
+           hottest methods after observing actual call patterns.
+
+         PublishSingleFile + IncludeNativeLibrariesForSelfExtract: bundle
+           the SQLCipher native DLL into the exe. Without IncludeNative, the
+           native DLL would still be extracted separately on first run.
+    -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <TieredPGO>true</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>
