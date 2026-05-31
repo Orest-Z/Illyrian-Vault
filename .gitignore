@@ -40,3 +40,4 @@ Add-CopyrightHeader.ps1
 
 #Publishing output
 publish/
+PublishRelease/
