@@ -347,7 +347,9 @@ static void TryDelete(string path)
 // ── GitHub API response models ────────────────────────────────────────────────
 
 record ReleaseInfo(
+    [property: System.Text.Json.Serialization.JsonPropertyName("tag_name")]
     string          TagName,
+    [property: System.Text.Json.Serialization.JsonPropertyName("assets")]
     List<AssetInfo> Assets);
 
 record AssetInfo(
