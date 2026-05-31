@@ -11,26 +11,32 @@ public enum AppLanguage { En, Sq }
 
 public sealed class LocalizationService
 {
-    private static readonly Uri EnUri = new("pack://application:,,,/Resources/Localization/Strings.en.xaml");
-    private static readonly Uri SqUri = new("pack://application:,,,/Resources/Localization/Strings.sq.xaml");
+    // Pre-parsed once so Apply() is a reference swap, not a re-parse.
+    private readonly ResourceDictionary _en = Load("Resources/Localization/Strings.en.xaml");
+    private readonly ResourceDictionary _sq = Load("Resources/Localization/Strings.sq.xaml");
 
     public AppLanguage Current { get; private set; } = AppLanguage.En;
 
     public void Apply(AppLanguage language)
     {
         Current = language;
-        Swap(language == AppLanguage.Sq ? SqUri : EnUri, EnUri, SqUri);
+        var next = language == AppLanguage.Sq ? _sq : _en;
+        Swap(next, _en, _sq);
     }
 
     /// <summary>Indexer: localization["UnlockButton"] → "Unlock Vault" or "Hap Kasafortën"</summary>
     public string this[string key] =>
         Application.Current.TryFindResource(key) is string s ? s : $"[{key}]";
 
-    private static void Swap(Uri next, params Uri[] toRemove)
+    private static void Swap(ResourceDictionary next, params ResourceDictionary[] toRemove)
     {
         var merged = Application.Current.Resources.MergedDictionaries;
-        var old = merged.FirstOrDefault(d => toRemove.Contains(d.Source));
-        if (old is not null) merged.Remove(old);
-        merged.Add(new ResourceDictionary { Source = next });
+        foreach (var d in toRemove)
+            if (merged.Contains(d)) merged.Remove(d);
+        if (!merged.Contains(next))
+            merged.Add(next);
     }
+
+    private static ResourceDictionary Load(string relPath) =>
+        new() { Source = new Uri($"pack://application:,,,/{relPath}") };
 }

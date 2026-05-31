@@ -27,6 +27,16 @@ public sealed class DatabaseService : IAsyncDisposable
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "IllyriaVault", "Profiles");
 
+    /// <summary>
+    /// Only alphanumerics, underscores, and hyphens are allowed in a username.
+    /// This prevents path-traversal attacks where a crafted username like
+    /// "../../../Windows/System32/evil" escapes the Profiles directory.
+    /// </summary>
+    public static bool IsValidUsername(string username) =>
+        !string.IsNullOrWhiteSpace(username) &&
+        username.Length <= 64 &&
+        System.Text.RegularExpressions.Regex.IsMatch(username, @"^[A-Za-z0-9_\-]+$");
+
     public static string GetProfileDir(string username) =>
         Path.Combine(ProfilesRoot, username);
 
@@ -101,7 +111,6 @@ public sealed class DatabaseService : IAsyncDisposable
         await DisposeAsync();
 
         Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
-        SQLitePCL.Batteries_V2.Init();
 
         _conn = new SqliteConnection($"Data Source={_dbPath};Mode=ReadWriteCreate");
         await _conn.OpenAsync();

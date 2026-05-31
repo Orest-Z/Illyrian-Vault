@@ -26,22 +26,45 @@ public sealed class IdleLockService : IDisposable
 
     public void Start()
     {
-        if (Application.Current.MainWindow is { } w)
-        {
-            w.PreviewMouseDown += OnActivity;
-            w.PreviewKeyDown   += OnActivity;
-        }
+        // Hook all currently open windows and any that open later so modal dialogs
+        // (e.g. AddEntryWindow) also reset the idle timer.
+        foreach (Window w in Application.Current.Windows)
+            AttachWindow(w);
+
+        Application.Current.Activated += OnAppActivated;
         _timer.Start();
     }
 
     public void Stop()
     {
         _timer.Stop();
-        if (Application.Current.MainWindow is { } w)
-        {
-            w.PreviewMouseDown -= OnActivity;
-            w.PreviewKeyDown   -= OnActivity;
-        }
+        Application.Current.Activated -= OnAppActivated;
+
+        foreach (Window w in Application.Current.Windows)
+            DetachWindow(w);
+    }
+
+    private void OnAppActivated(object? sender, EventArgs e)
+    {
+        // A new modal window just got focus — attach activity listeners to it.
+        foreach (Window w in Application.Current.Windows)
+            AttachWindow(w);
+        _lastActivity = DateTime.UtcNow;
+    }
+
+    private void AttachWindow(Window w)
+    {
+        // Detach first to avoid double-hooking if Start() is called more than once.
+        w.PreviewMouseDown -= OnActivity;
+        w.PreviewKeyDown   -= OnActivity;
+        w.PreviewMouseDown += OnActivity;
+        w.PreviewKeyDown   += OnActivity;
+    }
+
+    private void DetachWindow(Window w)
+    {
+        w.PreviewMouseDown -= OnActivity;
+        w.PreviewKeyDown   -= OnActivity;
     }
 
     public void SetTimeout(TimeSpan timeout) => _timeout = timeout;

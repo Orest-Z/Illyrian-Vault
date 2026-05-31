@@ -11,29 +11,35 @@ public enum AppTheme { Red, Dark, Light }
 
 public sealed class ThemeService
 {
-    private static readonly Uri RedUri   = new("pack://application:,,,/Resources/Themes/RedTheme.xaml");
-    private static readonly Uri DarkUri  = new("pack://application:,,,/Resources/Themes/DarkTheme.xaml");
-    private static readonly Uri LightUri = new("pack://application:,,,/Resources/Themes/LightTheme.xaml");
+    // Pre-parsed at construction time so Apply() is a cheap reference swap,
+    // not a XAML re-parse (which was ~40–80 ms per switch on slow machines).
+    private readonly ResourceDictionary _red   = Load("Resources/Themes/RedTheme.xaml");
+    private readonly ResourceDictionary _dark  = Load("Resources/Themes/DarkTheme.xaml");
+    private readonly ResourceDictionary _light = Load("Resources/Themes/LightTheme.xaml");
 
     public AppTheme Current { get; private set; } = AppTheme.Red;
 
     public void Apply(AppTheme theme)
     {
         Current = theme;
-        var target = theme switch
+        var next = theme switch
         {
-            AppTheme.Dark  => DarkUri,
-            AppTheme.Light => LightUri,
-            _              => RedUri,
+            AppTheme.Dark  => _dark,
+            AppTheme.Light => _light,
+            _              => _red,
         };
-        Swap(target, RedUri, DarkUri, LightUri);
+        Swap(next, _red, _dark, _light);
     }
 
-    private static void Swap(Uri next, params Uri[] toRemove)
+    private static void Swap(ResourceDictionary next, params ResourceDictionary[] toRemove)
     {
         var merged = Application.Current.Resources.MergedDictionaries;
-        var old = merged.FirstOrDefault(d => toRemove.Contains(d.Source));
-        if (old is not null) merged.Remove(old);
-        merged.Add(new ResourceDictionary { Source = next });
+        foreach (var d in toRemove)
+            if (merged.Contains(d)) merged.Remove(d);
+        if (!merged.Contains(next))
+            merged.Add(next);
     }
+
+    private static ResourceDictionary Load(string relPath) =>
+        new() { Source = new Uri($"pack://application:,,,/{relPath}") };
 }
