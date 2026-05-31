@@ -124,7 +124,7 @@ public partial class RegisterViewModel : BaseViewModel
 
     private bool CanGoNext() => CurrentStep switch
     {
-        1 => !string.IsNullOrWhiteSpace(Username)
+        1 => DatabaseService.IsValidUsername(Username)
              && NewPassword.Length >= 8
              && NewPassword == ConfirmPassword
              && StrengthScore >= 3,
@@ -162,15 +162,27 @@ public partial class RegisterViewModel : BaseViewModel
         ClearError();
         try
         {
+            if (!DatabaseService.IsValidUsername(Username))
+            {
+                ErrorMessage = "Username may only contain letters, numbers, hyphens, and underscores (max 64 characters).";
+                return;
+            }
+
             if (DatabaseService.ProfileExists(Username))
             {
                 ErrorMessage = "Username already exists on this device.";
                 return;
             }
 
-            var salt       = _crypto.GenerateSalt();
-            var key        = _crypto.DeriveKeyV2(NewPassword, salt);
-            var verifyHash = _crypto.CreateVerificationHash(key);
+            var salt = _crypto.GenerateSalt();
+
+            // Use the pinned SecureMemory path so the GC cannot move the key bytes
+            // between derivation and the ZeroMemory call in the finally block.
+            byte[] pwBytes = Encoding.UTF8.GetBytes(NewPassword);
+            using var keyBuffer = SecureMemory.DeriveKeyV2(pwBytes, salt);
+            CryptographicOperations.ZeroMemory(pwBytes);
+
+            var verifyHash = _crypto.CreateVerificationHash(keyBuffer.RoSpan);
 
             // Wrap the master key so the recovery flow can unwrap it without knowing the password.
             var recoverySalt       = _crypto.GenerateSalt();
@@ -178,7 +190,7 @@ public partial class RegisterViewModel : BaseViewModel
             var recoveryDerivedKey = Rfc2898DeriveBytes.Pbkdf2(
                 recoveryKeyBytes, recoverySalt, 600_000, HashAlgorithmName.SHA512, 32);
             System.Security.Cryptography.CryptographicOperations.ZeroMemory(recoveryKeyBytes);
-            var wrappedMasterKey   = _crypto.Encrypt(Convert.ToHexString(key), recoveryDerivedKey);
+            var wrappedMasterKey   = _crypto.Encrypt(Convert.ToHexString(keyBuffer.RoSpan.ToArray()), recoveryDerivedKey);
             System.Security.Cryptography.CryptographicOperations.ZeroMemory(recoveryDerivedKey);
 
             var profileDir = DatabaseService.GetProfileDir(Username);
@@ -207,12 +219,10 @@ public partial class RegisterViewModel : BaseViewModel
                 CreatedAt        = DateTime.UtcNow,
             };
 
-            var sessionCopy = new byte[key.Length];
-            Buffer.BlockCopy(key, 0, sessionCopy, 0, key.Length);
-            App.SetSessionKey(sessionCopy);
+            // AllocateSessionKey copies bytes into a fresh array that App.SetSessionKey pins.
+            App.SetSessionKey(SecureMemory.AllocateSessionKey(keyBuffer));
             _db.SetProfile(Username);
-            await _db.OpenAsync(key);
-            CryptographicOperations.ZeroMemory(key);
+            await _db.OpenAsync(keyBuffer.Span.ToArray());
             await _db.SaveUserAsync(user);
 
             // Zero the plain-string password fields as early as possible.
