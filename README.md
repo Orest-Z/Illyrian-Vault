@@ -69,6 +69,18 @@ It will check GitHub for the latest version, download it, swap the exe, and rela
 
 ---
 
+## Demo
+
+<div align="center">
+  <video src="assets/Illyrian%20Vault.mp4" controls width="85%">
+    Your browser does not support the video tag.
+  </video>
+  <br/>
+  <sub>Full walkthrough — login, adding entries, password generator, clipboard guard, theme switching, and auto-lock.</sub>
+</div>
+
+---
+
 ## What is Illyrian Vault?
 
 Illyrian Vault is a free, portable password manager built for Windows. Everything is stored locally in a fully encrypted database — there is no server, no sync service, and no internet requirement. The master password never leaves your device.
